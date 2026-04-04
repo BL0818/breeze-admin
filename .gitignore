@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# IDE
+.vscode/
+
+# Serena MCP
+.serena/
+
+# Spec workflow
+.spec-workflow/
+
+# Auto-generated
+*.tsbuildinfo
+typed-router.d.ts
+vite.config.d.ts
