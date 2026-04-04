@@ -68,7 +68,7 @@ export function useTabs() {
   // 监听路由变化
   watch(
     () => route.path,
-    (path) => {
+    (path, oldPath) => {
       // 跳过隐藏路由（如 redirect 路由）
       if (route.meta?.hidden) return
       if (route.meta) {
@@ -77,6 +77,10 @@ export function useTabs() {
           name: route.name as string | undefined,
           meta: route.meta
         })
+      }
+      // 清理旧路由的动态标题
+      if (oldPath) {
+        tabsStore.clearDynamicTitle(oldPath)
       }
     }
   )

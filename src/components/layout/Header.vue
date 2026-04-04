@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Menu, Bell, Moon, Sun, Globe, LogOut, AlignJustify, Monitor, Maximize, Minimize } from 'lucide-vue-next'
+import { Menu, Bell, Moon, Sun, Globe, LogOut, AlignJustify, Monitor, Maximize, Minimize, SwatchBook } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import {
   Breadcrumb,
@@ -20,6 +20,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useAppStore } from '@/stores/app'
 import { useAuthStore } from '@/stores/auth'
+import { useThemeStore } from '@/stores/theme'
 import { computed, watch, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -35,6 +36,7 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const appStore = useAppStore()
 const authStore = useAuthStore()
+const themeStore = useThemeStore()
 const route = useRoute()
 const router = useRouter()
 const { isFullscreen, toggle: toggleFullscreen } = useFullscreen()
@@ -97,16 +99,16 @@ watch(
     </Button>
 
     <!-- Breadcrumb -->
-    <Breadcrumb class="hidden md:flex">
+    <Breadcrumb v-if="themeStore.showBreadcrumb" class="hidden md:flex">
       <BreadcrumbList>
         <template v-for="(item, index) in translatedBreadcrumbs" :key="item.path">
           <BreadcrumbItem>
-            <BreadcrumbLink v-if="index < translatedBreadcrumbs.length - 1" :href="item.path" class="flex items-center gap-1.5">
-              <component :is="item.icon" class="h-4 w-4" />
+            <BreadcrumbLink v-if="index < translatedBreadcrumbs.length - 1 && item.hasComponent" :href="item.path" class="flex items-center gap-1.5">
+              <component v-if="themeStore.showBreadcrumbIcon" :is="item.icon" class="h-4 w-4" />
               <span>{{ item.title }}</span>
             </BreadcrumbLink>
-            <BreadcrumbPage v-else class="flex items-center gap-1.5">
-              <component :is="item.icon" class="h-4 w-4" />
+            <BreadcrumbPage v-else class="flex items-center gap-1.5" :class="{ 'text-muted-foreground font-normal': !item.hasComponent }">
+              <component v-if="themeStore.showBreadcrumbIcon" :is="item.icon" class="h-4 w-4" />
               <span>{{ item.title }}</span>
             </BreadcrumbPage>
           </BreadcrumbItem>
@@ -118,14 +120,19 @@ watch(
     <!-- Spacer -->
     <div class="flex-1" />
 
+    <!-- Settings Button -->
+    <Button variant="ghost" size="icon" @click="themeStore.openSettings()">
+      <SwatchBook class="h-5 w-5" />
+    </Button>
+
     <!-- Fullscreen Toggle -->
-    <Button variant="ghost" size="icon" @click="toggleFullscreen">
+    <Button v-if="themeStore.showFullscreenBtn" variant="ghost" size="icon" @click="toggleFullscreen">
       <Minimize v-if="isFullscreen" class="h-5 w-5" />
       <Maximize v-else class="h-5 w-5" />
     </Button>
 
     <!-- Theme Toggle -->
-    <DropdownMenu>
+    <DropdownMenu v-if="themeStore.showThemeBtn">
       <DropdownMenuTrigger as-child>
         <Button variant="ghost" size="icon">
           <Sun v-if="appStore.themeMode === 'light'" class="h-5 w-5" />
@@ -150,7 +157,7 @@ watch(
     </DropdownMenu>
 
     <!-- Language Toggle -->
-    <DropdownMenu>
+    <DropdownMenu v-if="themeStore.showLanguageBtn">
       <DropdownMenuTrigger as-child>
         <Button variant="ghost" size="icon">
           <Globe class="h-5 w-5" />

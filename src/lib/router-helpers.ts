@@ -10,6 +10,7 @@ export interface RouteMetaInfo {
   title?: string
   icon?: IconName
   hidden?: boolean
+  hasComponent?: boolean
 }
 
 /**
@@ -20,28 +21,23 @@ function buildRoutePathMap(routes: AppRouteConfig[], parentPath = ''): Map<strin
   const pathMap = new Map<string, AppRouteConfig>()
 
   for (const route of routes) {
-    // 跳过空路径和隐藏路由
-    if (!route.path || route.meta?.hidden) {
+    // 跳过隐藏路由
+    if (route.meta?.hidden) {
       continue
     }
 
-    // 构建完整路径，确保带前导斜杠
-    const fullPath = parentPath
-      ? `${parentPath}/${route.path}`
-      : `/${route.path}`
+    // 处理空路径：映射为父路径（如 Dashboard path='' → parentPath='/'）
+    const fullPath = route.path === ''
+      ? (parentPath || '/')
+      : (parentPath ? `${parentPath}/${route.path}` : `/${route.path}`)
 
-    // 只存储完整路径（叶子节点）的 meta
-    // 如果有 children，继续递归
+    // 有 children 时递归处理
     if (route.children && route.children.length > 0) {
-      // 如果有 redirect 且没有 exact match，用 redirect 的路径
-      if (route.redirect && !route.component) {
-        // redirect 路由不直接加入 map，让子路由来处理
-      } else {
-        // 非 redirect 路由，记录自己
+      // 非 redirect-only 路由记录自身（面包屑需要父级）
+      if (!route.redirect || route.component || route.meta?.title) {
         pathMap.set(fullPath, route)
       }
 
-      // 递归处理子路由
       const childMap = buildRoutePathMap(route.children, fullPath)
       childMap.forEach((config, path) => {
         pathMap.set(path, config)
@@ -85,7 +81,8 @@ export function getRouteMeta(path: string): RouteMetaInfo | null {
     path,
     title: route.meta?.title as string | undefined,
     icon: route.meta?.icon as IconName | undefined,
-    hidden: route.meta?.hidden ?? false
+    hidden: route.meta?.hidden ?? false,
+    hasComponent: !!route.component
   }
 }
 
@@ -95,9 +92,23 @@ export function getRouteMeta(path: string): RouteMetaInfo | null {
  */
 export function buildBreadcrumbs(
   path: string
-): { path: string; title: string; icon: IconName }[] {
+): { path: string; title: string; icon: IconName; hasComponent: boolean }[] {
+  // 根路径直接查找
+  if (path === '/') {
+    const meta = getRouteMeta('/')
+    if (meta && !meta.hidden) {
+      return [{
+        path: '/',
+        title: meta.title ?? 'Home',
+        icon: meta.icon ?? 'LayoutDashboard',
+        hasComponent: meta.hasComponent ?? true
+      }]
+    }
+    return []
+  }
+
   const segments = path.split('/').filter(Boolean)
-  const items: { path: string; title: string; icon: IconName }[] = []
+  const items: { path: string; title: string; icon: IconName; hasComponent: boolean }[] = []
   let currentPath = ''
 
   for (const segment of segments) {
@@ -108,7 +119,8 @@ export function buildBreadcrumbs(
       items.push({
         path: currentPath,
         title: meta.title ?? segment,
-        icon: meta.icon ?? 'LayoutDashboard'
+        icon: meta.icon ?? 'LayoutDashboard',
+        hasComponent: meta.hasComponent ?? true
       })
     }
   }

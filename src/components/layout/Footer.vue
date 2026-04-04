@@ -1,9 +1,19 @@
 <script setup lang="ts">
 import { ExternalLink } from 'lucide-vue-next'
+import { useThemeStore } from '@/stores/theme'
+import { computed } from 'vue'
+
+const themeStore = useThemeStore()
+const footerStyle = computed(() => ({
+  height: `${themeStore.footerHeight}px`
+}))
 </script>
 
 <template>
-  <footer class="flex h-12 items-center justify-center bg-background px-4 text-sm text-muted-foreground shadow-[0_-1px_3px_rgba(0,0,0,0.06)]">
+  <footer
+    class="flex items-center justify-center bg-background px-4 text-sm text-muted-foreground shadow-[0_-1px_3px_rgba(0,0,0,0.06)]"
+    :style="footerStyle"
+  >
     <a
       href="https://docs.breezeui.cn/"
       target="_blank"

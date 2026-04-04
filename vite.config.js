@@ -61,6 +61,24 @@ export default defineConfig(function (_a) {
         },
         server: {
             port: 2018
+        },
+        optimizeDeps: {
+            include: [
+                'vue',
+                'vue-router',
+                'pinia',
+                'echarts',
+                'reka-ui',
+                'lucide-vue-next',
+                '@vueuse/core',
+                'vorms',
+                'zod'
+            ]
+        },
+        build: {
+            commonjsOptions: {
+                transformMixedEsModules: true
+            }
         }
     };
 });

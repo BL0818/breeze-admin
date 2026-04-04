@@ -22,6 +22,7 @@ import {
 } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth'
+import { useThemeStore } from '@/stores/theme'
 import { useI18n } from 'vue-i18n'
 import { ROUTES_META } from '@/router/routes-config'
 import { hasPermission } from '@/router/permissions'
@@ -73,6 +74,7 @@ const iconMap: Record<string, Component> = {
 const { t } = useI18n()
 const route = useRoute()
 const authStore = useAuthStore()
+const themeStore = useThemeStore()
 
 // 展开状态管理
 const expandedMenus = ref<Set<string>>(new Set())
@@ -182,8 +184,11 @@ watch(() => route.path, (newPath) => {
     <aside
       :class="cn(
         'fixed left-0 top-0 z-40 h-screen bg-card shadow-[2px_0_8px_rgba(0,0,0,0.06)] transition-all duration-300',
-        isCollapsed ? 'w-[80px]' : 'w-[280px]'
+        isCollapsed ? '' : ''
       )"
+      :style="{
+        width: isCollapsed ? `${themeStore.sidebarCollapsedWidth}px` : `${themeStore.sidebarWidth}px`
+      }"
     >
       <div class="flex h-full flex-col">
         <!-- Logo -->
@@ -214,10 +219,11 @@ watch(() => route.path, (newPath) => {
                       :class="cn(
                         'flex items-center justify-center rounded-lg p-2.5 transition-colors w-full',
                         'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                        (isExactActive(item.path) || isSubActive(item.path)) && 'bg-accent text-accent-foreground'
+                        isExactActive(item.path) && 'bg-accent text-accent-foreground',
+                        isSubActive(item.path) && 'text-primary'
                       )"
                     >
-                      <component :is="item.icon" class="h-5 w-5 shrink-0" />
+                      <component :is="item.icon" class="h-5 h-5 shrink-0" />
                     </button>
                   </PopoverTrigger>
                   <PopoverContent
@@ -295,7 +301,8 @@ watch(() => route.path, (newPath) => {
                       :class="cn(
                         'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors w-full',
                         'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                        (isExactActive(item.path) || isSubActive(item.path)) && 'bg-accent text-accent-foreground'
+                        isExactActive(item.path) && 'bg-accent text-accent-foreground',
+                        isSubActive(item.path) && 'text-primary'
                       )"
                     >
                       <component :is="item.icon" class="h-5 w-5 shrink-0" />
@@ -314,7 +321,8 @@ watch(() => route.path, (newPath) => {
                               :class="cn(
                                 'flex items-center gap-3 rounded-lg pl-9 pr-3 py-2 text-sm transition-colors w-full',
                                 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                                (isExactActive(level2.path) || isSubActive(level2.path)) && 'bg-accent text-accent-foreground'
+                                isExactActive(level2.path) && 'bg-accent text-accent-foreground',
+                                isSubActive(level2.path) && 'text-primary'
                               )"
                             >
                               <component :is="level2.icon" class="h-4 w-4 shrink-0" />

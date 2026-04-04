@@ -4,19 +4,37 @@ import Sidebar from './Sidebar.vue'
 import Header from './Header.vue'
 import TabsBar from './TabsBar.vue'
 import Footer from './Footer.vue'
-import { Sheet, SheetContent, SheetTitle, SheetDescription } from '@/components/ui/sheet'
+import ThemeSettings from './ThemeSettings.vue'
+import LoadingBar from './LoadingBar.vue'
+import { Sheet } from '@/components/ui/sheet'
 import { useAppStore } from '@/stores/app'
+import { useThemeStore } from '@/stores/theme'
+import { useTabsStore } from '@/stores/tabs'
 import { useTabs } from '@/composables/use-tabs'
-import { computed, watch } from 'vue'
+import { computed, watch, onMounted } from 'vue'
 
 const appStore = useAppStore()
+const themeStore = useThemeStore()
+const tabsStore = useTabsStore()
 const route = useRoute()
+
+// RouterView 的复合 key，包含 refreshKey 以支持刷新功能
+const routerViewKey = computed(() => `${route.path}__${tabsStore.refreshKey}`)
 
 // 初始化 tabs
 useTabs()
 
-// 侧边栏宽度计算
-const sidebarWidth = computed(() => appStore.sidebarCollapsed ? '80px' : '280px')
+// 初始化主题颜色
+onMounted(() => {
+  themeStore.initTheme()
+})
+
+// 侧边栏宽度计算 — 从 themeStore 读取
+const sidebarWidth = computed(() =>
+  appStore.sidebarCollapsed
+    ? `${themeStore.sidebarCollapsedWidth}px`
+    : `${themeStore.sidebarWidth}px`
+)
 
 // 路由变化时关闭移动端 Sheet
 watch(() => route.path, () => {
@@ -28,6 +46,7 @@ watch(() => route.path, () => {
 
 <template>
   <div class="min-h-screen bg-background">
+    <LoadingBar />
     <!-- Desktop Sidebar - 仅在桌面端显示 -->
     <div class="hidden md:block">
       <Sidebar
@@ -55,24 +74,32 @@ watch(() => route.path, () => {
         @toggle-desktop-sidebar="appStore.toggleSidebar"
       />
 
-      <TabsBar class="flex-shrink-0" />
+      <TabsBar v-if="themeStore.showTabsBar" class="flex-shrink-0" />
 
       <main class="flex-1 min-w-0 p-6 overflow-y-auto overflow-x-hidden">
         <RouterView v-slot="{ Component }">
           <Transition name="slide-fade" mode="out-in">
-            <component :is="Component" :key="route.path" />
+            <KeepAlive v-if="themeStore.tabsKeepAlive">
+              <component :is="Component" :key="routerViewKey" />
+            </KeepAlive>
+            <component v-else :is="Component" :key="routerViewKey" />
           </Transition>
         </RouterView>
       </main>
 
-      <Footer class="flex-shrink-0" />
+      <Footer v-if="themeStore.showFooter" class="flex-shrink-0" :height="themeStore.footerHeight" />
     </div>
+
+    <!-- 主题配置 Sheet -->
+    <Sheet v-model:open="themeStore.settingsOpen">
+      <ThemeSettings />
+    </Sheet>
   </div>
 </template>
 
 <style scoped>
 .slide-fade-enter-active {
-  transition: all 0.25s ease-out;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .slide-fade-leave-active {
@@ -80,12 +107,12 @@ watch(() => route.path, () => {
 }
 
 .slide-fade-enter-from {
-  transform: translateX(-24px);
+  transform: translateX(-20px);
   opacity: 0;
 }
 
 .slide-fade-leave-to {
-  transform: translateX(24px);
+  transform: translateX(20px);
   opacity: 0;
 }
 </style>

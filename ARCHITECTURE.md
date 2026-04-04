@@ -196,24 +196,38 @@ src/
 │       ├── dashboard.ts       # getMetrics / getSalesTrend / getRecentOrders
 │       ├── orders.ts          # getOrders
 │       ├── users.ts           # getUsers
-│       └── query.ts           # getQueryRecords
+│       ├── query.ts           # getQueryRecords
+│       ├── system.ts          # getRequestLogs / getPermissions / getAdminInfo / getAdminUsers
+│       └── example.ts         # CRUD / 并发请求 / 错误模拟示例
 ├── components/
-│   ├── ui/                   # shadcn-vue 组件 (Form, Input, Label 等)
-│   ├── layout/               # Sidebar, Header, AppLayout
+│   ├── ui/                   # shadcn-vue 组件 (Form, Input, Label, Switch, Tooltip, Collapsible 等)
+│   ├── layout/               # Sidebar, Header, AppLayout, ThemeSettings, TabsBar, Footer, LoadingBar
 │   └── dashboard/            # MetricCard, SalesChart, OrdersTable, + Skeletons
-├── composables/              # useAuth, useTheme, usePermissions
+├── composables/
+│   ├── use-tabs.ts           # Tab 栏与路由联动（初始化固定标签 + 路由监听）
+│   ├── use-color.ts          # hex↔HSL 颜色转换（shadcn CSS 变量格式）
+│   ├── use-progress.ts       # 全局进度条状态（start / finish / fail + 滴漏动画）
+│   └── use-tab-title.ts      # 动态标签标题设置
 ├── hooks/                    # useExportExcel 等自定义 Hook
-├── lib/                      # utils.ts, constants.ts
+├── lib/
+│   ├── utils.ts              # cn() 函数（clsx + tailwind-merge）
+│   ├── constants.ts          # 全局常量
+│   ├── icon-map.ts           # Lucide 图标名称→组件映射
+│   └── router-helpers.ts     # 路由元信息查找 + 面包屑构建（O(1) 扁平化 Map）
 ├── mocks/
 │   ├── handlers.ts           # MSW API 拦截规则（Schema 从 @/types/api-schema 导入）
 │   └── browser.ts            # 浏览器端 MSW 配置
 ├── router/
-│   ├── index.ts              # 路由入口，使用 vue-router/auto-routes
-│   ├── routes-config.ts      # 集中式路由元信息配置（Meta 与组件分离）
+│   ├── index.ts              # 路由入口 + LoadingBar 钩子（beforeEach/afterEach）
+│   ├── routes-config.ts      # 集中式路由配置（路径 + 组件 + Meta 合一）
+│   ├── types.ts              # AppRouteConfig / AppRouteMeta 类型定义
+│   ├── permissions.ts        # hasPermission 角色权限判断
 │   └── guards.ts             # 权限守卫（认证 + 角色白名单）
 ├── stores/
 │   ├── auth.ts               # 认证状态（pinia-plugin-persistedstate 自动持久化）
-│   └── app.ts                # 应用状态（侧边栏、主题）
+│   ├── app.ts                # 应用状态（侧边栏、主题模式、语言）
+│   ├── theme.ts              # 主题配置（颜色、布局、通用开关 + 版本化持久化）
+│   └── tabs.ts               # 标签栏状态（tabs / activeTab / refreshKey + 拖拽排序 + 持久化）
 ├── types/
 │   └── api-schema.ts         # 全量 Zod Schema + TypeScript 类型导出（唯一数据源）
 ├── utils/
@@ -227,7 +241,10 @@ src/
 │   ├── orders/
 │   │   └── Orders.vue
 │   ├── system/
-│   │   └── UserManagement.vue
+│   │   ├── RequestManagement.vue
+│   │   ├── SwitchPermissions.vue
+│   │   ├── SuperAdmin.vue
+│   │   └── RequestExamples.vue
 │   ├── query/
 │   │   └── QueryTable.vue
 │   ├── form/
@@ -237,7 +254,7 @@ src/
 ├── locales/
 │   ├── en.ts                 # 英文翻译
 │   └── zh.ts                 # 中文翻译
-└── main.ts
+└── main.ts                   # 应用入口（Pinia + MSW + i18n + 路由）
 ```
 
 ## 核心功能实现
@@ -386,6 +403,17 @@ http.post('/api/auth/login', async ({ request }) => {
   - **禁止手动 localStorage 调用**（双重持久化已修复）
   - `User` 类型从 `@/types/api-schema` 导入
 - **app.ts**: sidebarCollapsed, theme, language
+- **theme.ts**: 主题配置中心，管理颜色 / 布局 / 通用开关三大模块
+  - 颜色：primaryColor, successColor, warningColor, errorColor（通过 CSS 变量 `--primary` / `--success` / `--warning` / `--destructive` 注入）
+  - 布局：showTabsBar, tabsKeepAlive, tabsMiddleClickClose, showBreadcrumb, showBreadcrumbIcon, sidebarWidth, sidebarCollapsedWidth, showFooter, footerHeight
+  - 通用：showLanguageBtn, showThemeBtn, showFullscreenBtn
+  - 持久化版本控制（`THEME_STORE_VERSION`），版本不兼容时自动清除旧缓存
+- **tabs.ts**: 标签栏状态管理
+  - tabs 数组（path / name / title / titleKey / icon / affix / closable / dynamicTitle）
+  - activeTab / refreshKey（递增触发 RouterView 重渲染）
+  - 操作：addTab, removeTab, setActiveTab, closeOtherTabs, closeLeftTabs, closeRightTabs, sortTabs, refreshCurrentTab, updateDynamicTitle
+  - 使用 `pinia-plugin-persistedstate` 持久化（`paths: ['tabs', 'activeTab']`）
+  - 初始化时从路由配置读取 `meta.affix` 补全固定标签
 
 #### 4.6 路由层 (`src/router/`)
 
@@ -395,9 +423,11 @@ http.post('/api/auth/login', async ({ request }) => {
 
 ```
 src/router/
-├── index.ts           # 路由入口
-├── routes-config.ts    # 集中式路由元信息配置
-└── guards.ts           # 权限守卫
+├── index.ts           # 路由入口 + LoadingBar 进度条钩子
+├── routes-config.ts   # 集中式路由配置（路径 + 组件 + Meta 合一）
+├── types.ts           # AppRouteConfig / AppRouteMeta 类型定义
+├── permissions.ts     # hasPermission 角色权限判断
+└── guards.ts          # 权限守卫（认证 + 角色白名单）
 ```
 
 ##### 4.6.2 类型定义 (`src/types/router.d.ts`)
@@ -459,8 +489,9 @@ export function mergeDynamicRoutes(routes: AppRouteConfig[]) {
 
 ```typescript
 import { createRouter, createWebHistory } from 'vue-router'
-import { routes } from 'vue-router/auto-routes'
+import { routes } from './routes-config'
 import { authGuard } from './guards'
+import { useProgress } from '@/composables/use-progress'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -468,6 +499,14 @@ const router = createRouter({
 })
 
 router.beforeEach(authGuard)
+
+// LoadingBar 进度条钩子 — 仅在路径真正变化时触发
+const { start, finish } = useProgress()
+router.beforeEach((to, from) => {
+  if (to.path !== from.path) start()
+})
+router.afterEach(() => finish())
+
 export default router
 ```
 
@@ -545,9 +584,33 @@ mergeDynamicRoutes(backendMenu)  // 合并到动态路由表
 
 #### 4.8 布局层 (`src/components/layout/`)
 
-- **AppLayout.vue**: 主布局容器，Desktop Sidebar + Mobile Sheet + Header + slot
-- **Sidebar.vue**: Logo, 导航菜单（Lucide图标），根据用户角色v-if控制菜单显示
-- **Header.vue**: 面包屑，搜索框，主题切换，通知，用户菜单
+- **AppLayout.vue**: 主布局容器，Desktop Sidebar + Mobile Sheet + Header + TabsBar + RouterView + Footer
+  - `routerViewKey = route.path + refreshKey`，支持标签刷新（递增 key 触发 RouterView 重渲染）
+  - `<Transition name="slide-fade">` 页面切换动画
+  - `<KeepAlive>` 可选启用（由 `themeStore.tabsKeepAlive` 控制）
+- **LoadingBar.vue**: 顶部进度条组件（fixed, z-index: 9999）
+  - 使用 `useProgress()` 共享状态（单例模式）
+  - 滴漏动画：30% 起步 → 随机增量趋近 95% → 完成时 100% → 300ms 后归零
+  - 防闪烁：最少展示 300ms
+  - 失败态：`--destructive` 红色 + 阴影
+  - `active` 标志位：`finish()` 在 `start()` 未调用时直接 return，防止同路径导航误触发
+- **Sidebar.vue**: Logo, 导航菜单（Lucide图标），根据用户角色过滤菜单
+  - 展开态：手风琴式 Collapsible（`expandedMenus` 状态管理）
+  - 收起态：Tooltip + Popover 浮层
+  - 自动展开当前菜单分支（`watch(route.path)` 驱动）
+- **Header.vue**: 面包屑 + 全屏切换 + 主题切换 + 多语言 + 通知 + 用户菜单
+  - 面包屑使用 `buildBreadcrumbs(route.path)` 从扁平化路由 Map O(1) 构建
+  - 根路径 `/`（Dashboard）特殊处理：直接查 `pathMap.get('/')` 获取元信息
+- **TabsBar.vue**: 多标签页管理
+  - 拖拽排序（vuedraggable）
+  - 右键菜单：刷新 / 关闭 / 关闭左侧 / 关闭右侧 / 关闭其他
+  - 中键点击关闭标签（由 `themeStore.tabsMiddleClickClose` 控制）
+  - 双击关闭可关闭标签
+  - 滚动按钮 + 鼠标滚轮横向滚动
+  - 下拉菜单快速切换标签（DropdownMenu）
+  - 点击已激活标签无操作（避免误触刷新和页面动画）
+- **Footer.vue**: 底部信息栏，高度由 `themeStore.footerHeight` 控制
+- **ThemeSettings.vue**: 主题设置面板（Sheet 右侧抽屉）
 
 #### 4.9 Dashboard组件 (`src/components/dashboard/`)
 
@@ -557,7 +620,111 @@ mergeDynamicRoutes(backendMenu)  // 合并到动态路由表
 - **OrdersTable.vue**: Table组件展示订单列表，状态Badge
 - **OrdersTableSkeleton.vue**: Table行骨架屏，加载时展示占位行
 
-#### 4.10 骨架屏防抖处理
+#### 4.10 主题系统 (`src/stores/theme.ts` + `src/composables/use-color.ts`)
+
+主题系统提供运行时颜色切换、布局参数调整和功能开关控制，所有配置通过 `pinia-plugin-persistedstate` 持久化到 `localStorage`。
+
+##### 4.10.1 架构概览
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│              ThemeSettings.vue（设置面板，Sheet 侧栏）           │
+│  预设色板 / 自定义颜色 / 布局开关 / 通用开关                      │
+│  v-model 绑定 computed → themeStore 双向同步                    │
+└────────────────────────┬──────────────────────────────────────┘
+                         │ 读写
+                         ▼
+┌──────────────────────────────────────────────────────────────┐
+│              themeStore (Pinia, key: theme-config)            │
+│  ┌─────────────┐  ┌──────────────────┐  ┌────────────────┐  │
+│  │ 颜色配置     │  │ 布局配置          │  │ 通用配置        │  │
+│  │ primaryColor│  │ showTabsBar       │  │ showLanguageBtn│  │
+│  │ successColor│  │ tabsKeepAlive     │  │ showThemeBtn   │  │
+│  │ warningColor│  │ tabsMiddleClick.. │  │ showFullscreen │  │
+│  │ errorColor  │  │ showBreadcrumb    │  └────────────────┘  │
+│  └──────┬──────┘  │ showBreadcrumbIcon│                      │
+│         │         │ sidebarWidth      │  persist → localStorage│
+│         │         │ sidebarCollapsedW │  版本化：THEME_STORE_VERSION │
+│         │         │ showFooter        │  beforeRestore: 版本检测 │
+│         │         │ footerHeight      │  afterRestore: 默认值回填│
+│         │         └──────────────────┘                      │
+│         │   applyColors()                                     │
+└─────────┼────────────────────────────────────────────────────┘
+          │
+          ▼
+┌──────────────────────────────────────────────────────────────┐
+│              CSS 变量注入（document.documentElement）            │
+│  --primary    ← primaryColor (hex → HSL)                      │
+│  --ring       ← primaryColor                                  │
+│  --info       ← primaryColor 亮度 +15%                        │
+│  --success    ← successColor                                  │
+│  --warning    ← warningColor                                  │
+│  --destructive← errorColor                                    │
+│                                                               │
+│  使用：hsl(var(--primary)) → Tailwind bg-primary / text-primary│
+└──────────────────────────────────────────────────────────────┘
+```
+
+##### 4.10.2 颜色系统 (`src/composables/use-color.ts`)
+
+| 函数 | 输入 | 输出 | 用途 |
+|------|------|------|------|
+| `hexToHsl(hex)` | `#3b82f6` | `"221.2 83.2% 53.3%"` | 转 shadcn CSS 变量格式 |
+| `hexToHslObject(hex)` | `#3b82f6` | `{ h: 221.2, s: 83.2, l: 53.3 }` | 中间计算 |
+| `computeInfoColor(hex)` | `#3b82f6` | `"221.2 83.2% 68.3%"` | 信息色 = 主色亮度 +15% |
+
+**设计要点**：
+- CSS 变量存储纯 HSL 值（如 `221.2 83.2% 53.3%`），Tailwind 通过 `hsl(var(--primary))` 引用
+- 信息色自动从主色派生（亮度 +15%，上限 80%），用户无需手动配置
+- 预设色板提供 7 种主题色（blue / violet / fuchsia / rose / orange / emerald / cyan），支持自定义颜色选择器
+
+##### 4.10.3 持久化与版本迁移
+
+```typescript
+const THEME_STORE_VERSION = 2
+
+persist: {
+  key: 'theme-config',
+  storage: localStorage,
+  beforeRestore: () => {
+    // 版本不兼容（无 _version 或旧版本）→ 清除旧缓存
+  },
+  afterRestore: (ctx) => {
+    // 默认值回填：缺失字段用 DEFAULT_*/DEFAULT_LAYOUT/DEFAULT_GENERAL 补全
+  },
+}
+```
+
+**版本迁移策略**：
+- 升级 `THEME_STORE_VERSION` 即可触发旧缓存清理
+- `afterRestore` 确保新增字段的向后兼容
+- `initTheme()` 在首次启动时写入版本号
+
+##### 4.10.4 主题设置面板 (`src/components/layout/ThemeSettings.vue`)
+
+使用 shadcn-vue `Sheet` 组件实现右侧抽屉面板，分为三大区域：
+
+| 区域 | 控件 | 组件 |
+|------|------|------|
+| 外观 | 预设色板（7色 + 自定义）、主/成功/警告/错误颜色选择器、重置按钮 | `<button>`, `<input type="color">` |
+| 布局 | 标签栏开关×3、面包屑开关×2、侧边栏宽度滑块×2、底部开关+高度滑块 | `<Switch>`, `<input type="range">` |
+| 通用 | 多语言/主题/全屏按钮开关×3 | `<Switch>` |
+
+**重要**：Switch 组件底层为 reka-ui `SwitchRoot`，使用 `v-model`（绑定 `modelValue`），**不是** `v-model:checked`。
+
+##### 4.10.5 布局集成
+
+所有布局组件均从 `themeStore` 读取配置并实时响应：
+
+| 组件 | 使用的主题配置 |
+|------|--------------|
+| `AppLayout.vue` | `sidebarWidth`, `sidebarCollapsedWidth`, `showFooter`, `footerHeight`；调用 `initTheme()` 初始化 |
+| `Header.vue` | `showBreadcrumb`, `showBreadcrumbIcon`, `showLanguageBtn`, `showThemeBtn`, `showFullscreenBtn` |
+| `Sidebar.vue` | `sidebarWidth`, `sidebarCollapsedWidth` |
+| `TabsBar.vue` | `showTabsBar`, `tabsKeepAlive`, `tabsMiddleClickClose` |
+| `Footer.vue` | `showFooter`, `footerHeight` |
+
+#### 4.11 骨架屏防抖处理
 
 使用 `@vueuse/core` 的 `useTimeoutFn` 实现 300ms 防抖：
 
@@ -581,7 +748,7 @@ showMetricSkeletons.value = false
 
 **规则**：只有当数据请求超过 300ms 才显示骨架屏，避免接口响应过快时闪烁。
 
-#### 4.11 页面层 (`src/views/`)
+#### 4.12 页面层 (`src/views/`)
 
 所有页面统一使用模块化 API + 响应解包模式：
 
@@ -749,9 +916,12 @@ pnpm dev
 3. `src/api/index.ts` - API 模块桶导出
 4. `src/api/modules/*.ts` - 模块化 API 定义
 5. `src/stores/auth.ts` - 认证状态 + pinia-plugin-persistedstate 自动持久化
-6. `src/mocks/handlers.ts` - MSW Mock 服务（Schema 统一导入）
-7. `src/router/index.ts` - 路由入口，集成守卫
-8. `src/components/layout/AppLayout.vue` - 布局系统
+6. `src/stores/theme.ts` - 主题配置（颜色/布局/通用）+ 版本化持久化 + CSS 变量注入
+7. `src/composables/use-color.ts` - hex↔HSL 颜色转换工具（shadcn CSS 变量格式）
+8. `src/components/layout/ThemeSettings.vue` - 主题设置面板（Sheet 抽屉）
+9. `src/mocks/handlers.ts` - MSW Mock 服务（Schema 统一导入）
+10. `src/router/index.ts` - 路由入口，集成守卫
+11. `src/components/layout/AppLayout.vue` - 布局系统
 
 ## 项目总结
 

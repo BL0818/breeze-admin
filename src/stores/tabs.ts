@@ -11,11 +11,13 @@ export interface TabItem {
   icon?: string
   affix?: boolean
   closable: boolean
+  dynamicTitle?: string  // 组件动态设置的标题（如 "编辑用户 - 张三"）
 }
 
 export const useTabsStore = defineStore('tabs', () => {
   const tabs = ref<TabItem[]>([])
   const activeTab = ref<string>('/')
+  const refreshKey = ref(0)
 
   // 固定标签（从路由 meta.affix 获取）
   const affixedTabs = computed(() => tabs.value.filter(tab => tab.affix))
@@ -100,11 +102,98 @@ export const useTabsStore = defineStore('tabs', () => {
     }
   }
 
+  // 关闭其他标签（保留指定标签 + 所有固定标签）
+  function closeOtherTabs(keepPath: string) {
+    tabs.value = tabs.value.filter(tab => tab.path === keepPath || tab.affix)
+    if (!tabs.value.some(tab => tab.path === activeTab.value)) {
+      activeTab.value = keepPath
+    }
+  }
+
+  // 关闭左侧标签
+  function closeLeftTabs(path: string) {
+    const index = tabs.value.findIndex(tab => tab.path === path)
+    if (index <= 0) return
+
+    const left = tabs.value.splice(0, index)
+    // 将左侧中的固定标签插回开头
+    const affixLeft = left.filter(tab => tab.affix)
+    if (affixLeft.length > 0) {
+      tabs.value.unshift(...affixLeft)
+    }
+
+    if (!tabs.value.some(tab => tab.path === activeTab.value)) {
+      activeTab.value = path
+    }
+  }
+
+  // 关闭右侧标签
+  function closeRightTabs(path: string) {
+    const index = tabs.value.findIndex(tab => tab.path === path)
+    if (index === -1 || index === tabs.value.length - 1) return
+
+    const right = tabs.value.splice(index + 1)
+    // 将右侧中的固定标签插回末尾
+    const affixRight = right.filter(tab => tab.affix)
+    if (affixRight.length > 0) {
+      tabs.value.push(...affixRight)
+    }
+
+    if (!tabs.value.some(tab => tab.path === activeTab.value)) {
+      activeTab.value = path
+    }
+  }
+
+  // 刷新当前页面（递增 key 触发 RouterView 重新渲染）
+  function refreshCurrentTab() {
+    refreshKey.value++
+  }
+
+  // 设置动态标题
+  function updateDynamicTitle(path: string, dynamicTitle: string) {
+    const tab = tabs.value.find(t => t.path === path)
+    if (tab) {
+      tab.dynamicTitle = dynamicTitle
+    }
+  }
+
+  // 清除动态标题
+  function clearDynamicTitle(path: string) {
+    const tab = tabs.value.find(t => t.path === path)
+    if (tab) {
+      tab.dynamicTitle = undefined
+    }
+  }
+
+  // 拖拽排序
+  function sortTabs(fromIndex: number, toIndex: number) {
+    const [moved] = tabs.value.splice(fromIndex, 1)
+    tabs.value.splice(toIndex, 0, moved)
+  }
+
   // 初始化固定标签（从路由配置读取）
   function initAffixTabs(affixRoutes: Array<{ path: string; name?: string; meta: AppRouteMeta }>) {
-    // 清空并重新初始化
-    tabs.value = []
+    // 如果已有持久化数据，仅补全缺失的固定标签
+    if (tabs.value.length > 0) {
+      for (const route of affixRoutes) {
+        if (tabs.value.some(tab => tab.path === route.path)) continue
+        const titleKey = route.meta.title as string | undefined
+        const title = translateTitle(titleKey, route.name || route.path)
+        tabs.value.unshift({
+          path: route.path,
+          name: route.name || route.path,
+          titleKey,
+          title,
+          icon: route.meta.icon,
+          affix: true,
+          closable: false
+        })
+      }
+      return
+    }
 
+    // 首次访问，清空并初始化
+    tabs.value = []
     for (const route of affixRoutes) {
       const titleKey = route.meta.title as string | undefined
       const title = translateTitle(titleKey, route.name || route.path)
@@ -128,6 +217,7 @@ export const useTabsStore = defineStore('tabs', () => {
   return {
     tabs,
     activeTab,
+    refreshKey,
     affixedTabs,
     closableTabs,
     addTab,
@@ -135,12 +225,19 @@ export const useTabsStore = defineStore('tabs', () => {
     setActiveTab,
     updateTabTitle,
     refreshAllTabTitles,
-    initAffixTabs
+    initAffixTabs,
+    closeOtherTabs,
+    closeLeftTabs,
+    closeRightTabs,
+    refreshCurrentTab,
+    updateDynamicTitle,
+    clearDynamicTitle,
+    sortTabs
   }
 }, {
   persist: {
     key: 'tabs',
-    storage: sessionStorage,
+    storage: localStorage,
     paths: ['tabs', 'activeTab']
   }
 })
