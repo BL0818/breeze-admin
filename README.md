@@ -197,6 +197,37 @@ pnpm dev
 
 ---
 
+## 🚢 部署到 Vercel（演示模式）
+
+本项目支持一键部署到 Vercel，开启 Mock 模式后无需后端服务即可在线体验全部功能。
+
+### 前置条件
+
+`msw` 已放在 `dependencies`（非 `devDependencies`），确保 Vercel 构建时能安装。
+
+### 部署步骤
+
+1. **Fork 或导入** 项目到你的 GitHub/Gitee 仓库
+2. 在 [Vercel Dashboard](https://vercel.com) 导入该项目
+3. 在项目 **Settings → Environment Variables** 中添加：
+
+| 变量名 | 值 | 说明 |
+|---|---|---|
+| `VITE_ENABLE_MOCK` | `true` | 启用 MSW Mock 服务 |
+| `VITE_SERVICE_BASE_URL` | `/api` | Mock 模式下的 API 基础路径（任意值即可，MSW 会拦截） |
+
+4. 点击 **Deploy** 部署
+
+### 注意事项
+
+- Mock 模式仅适用于**演示和预览**，不适合生产环境
+- 所有数据为模拟数据，刷新后丢失
+- 如需接入真实后端，将 `VITE_ENABLE_MOCK` 设为 `false`，并将 `VITE_SERVICE_BASE_URL` 指向实际 API 地址；同时建议将 `package.json` 中的 `msw` 移回 `devDependencies` 以减小生产包体积
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/import/project)
+
+---
+
 ## 🔑 测试账号
 
 Mock 环境下内置三种角色的测试账号：
