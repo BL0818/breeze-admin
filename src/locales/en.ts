@@ -37,7 +37,10 @@ export default {
     requestManagement: 'Request Management',
     switchPermissions: 'Switch Permissions',
     superAdmin: 'Super Admin',
-    requestExamples: 'Request Examples'
+    requestExamples: 'Request Examples',
+    menuLevel1: 'Level 1 Menu',
+    menuLevel2: 'Level 2 Menu',
+    menuLevel3: 'Level 3 Menu'
   },
   dashboard: {
     title: 'Dashboard',

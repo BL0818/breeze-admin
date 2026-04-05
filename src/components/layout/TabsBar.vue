@@ -226,7 +226,7 @@ onBeforeUnmount(() => {
       <button
         v-if="showScrollLeft"
         @click="scrollToLeft"
-        class="flex-shrink-0 flex items-center justify-center w-7 h-full hover:bg-muted transition-colors text-muted-foreground"
+        class="flex-shrink-0 flex items-center justify-center w-7 h-7 my-auto ml-1 rounded-md hover:bg-muted transition-colors text-muted-foreground"
       >
         <ChevronLeft class="h-4 w-4" />
       </button>
@@ -282,7 +282,7 @@ onBeforeUnmount(() => {
       <button
         v-if="showScrollRight"
         @click="scrollToRight"
-        class="flex-shrink-0 flex items-center justify-center w-7 h-full hover:bg-muted transition-colors text-muted-foreground"
+        class="flex-shrink-0 flex items-center justify-center w-7 h-7 my-auto rounded-md hover:bg-muted transition-colors text-muted-foreground"
       >
         <ChevronRight class="h-4 w-4" />
       </button>
@@ -290,7 +290,7 @@ onBeforeUnmount(() => {
       <!-- 更多标签下拉菜单 -->
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
-          <button class="flex-shrink-0 flex items-center justify-center w-7 h-full hover:bg-muted transition-colors text-muted-foreground">
+          <button class="flex-shrink-0 flex items-center justify-center w-7 h-7 my-auto mx-1 rounded-md hover:bg-muted transition-colors text-muted-foreground">
             <ChevronsUpDown class="h-4 w-4" />
           </button>
         </DropdownMenuTrigger>

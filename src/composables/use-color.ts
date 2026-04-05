@@ -58,6 +58,15 @@ export function computeInfoColor(primaryHex: string): string {
   return `${round(h)} ${round(s)}% ${round(newL)}%`
 }
 
+/**
+ * 根据背景色亮度计算最佳前景色 HSL 字符串。
+ * 亮度 > 50% → 深色前景；否则 → 浅色前景。
+ */
+export function computeForeground(hex: string): string {
+  const { l } = hexToHslObject(hex)
+  return l > 50 ? '222.2 84% 4.9%' : '210 40% 98%'
+}
+
 // ---- internal ----
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } {

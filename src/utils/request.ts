@@ -59,7 +59,7 @@ function handle401(): void {
 // ======================== Alova 实例 ========================
 
 export const alovaInstance = createAlova({
-  baseURL: 'http://localhost:2018',
+  baseURL: import.meta.env.VITE_SERVICE_BASE_URL,
   statesHook: VueHook,
   timeout: 30000,
   requestAdapter: GlobalFetch(),

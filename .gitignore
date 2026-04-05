@@ -17,3 +17,7 @@ dist/
 *.tsbuildinfo
 typed-router.d.ts
 vite.config.d.ts
+
+# Local env overrides (contains secrets, not tracked)
+.env.local
+.env.*.local

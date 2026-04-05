@@ -37,7 +37,10 @@ export default {
     requestManagement: '请求管理',
     switchPermissions: '切换权限',
     superAdmin: '超级管理员',
-    requestExamples: '请求示例'
+    requestExamples: '请求示例',
+    menuLevel1: '一级菜单',
+    menuLevel2: '二级菜单',
+    menuLevel3: '三级菜单'
   },
   dashboard: {
     title: '仪表盘',

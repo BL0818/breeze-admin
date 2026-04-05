@@ -6,9 +6,17 @@ import {
   Settings,
   Settings2,
   Shield,
+  ShieldCheck,
   UserCog,
   Menu,
   Home,
+  Search,
+  FileText,
+  Crown,
+  Code,
+  Layers,
+  FolderTree,
+  File,
   type Component
 } from 'lucide-vue-next'
 
@@ -21,9 +29,17 @@ export type IconName =
   | 'Settings'
   | 'Settings2'
   | 'Shield'
+  | 'ShieldCheck'
   | 'UserCog'
   | 'Menu'
   | 'Home'
+  | 'Search'
+  | 'FileText'
+  | 'Crown'
+  | 'Code'
+  | 'Layers'
+  | 'FolderTree'
+  | 'File'
 
 // Lucide 图标名称到组件的映射
 export const iconMap: Record<IconName, Component> = {
@@ -34,9 +50,17 @@ export const iconMap: Record<IconName, Component> = {
   Settings,
   Settings2,
   Shield,
+  ShieldCheck,
   UserCog,
   Menu,
-  Home
+  Home,
+  Search,
+  FileText,
+  Crown,
+  Code,
+  Layers,
+  FolderTree,
+  File
 }
 
 /**

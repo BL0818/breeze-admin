@@ -7,7 +7,10 @@ import { authApi } from '@/api'
 import { BusinessError } from '@/utils/request'
 import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
+import { useThemeStore } from '@/stores/theme'
 import { useRouter } from 'vue-router'
+
+const appTitle = import.meta.env.VITE_APP_TITLE || 'BreezeAdmin'
 import { useI18n } from 'vue-i18n'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -34,6 +37,7 @@ import { Sun, Moon, Monitor, Globe, User, Lock, Wind, Zap, Shield, Layers, Alert
 import type { LoginData } from '@/types/api-schema'
 
 const appStore = useAppStore()
+const themeStore = useThemeStore()
 
 const { t } = useI18n()
 const router = useRouter()
@@ -113,21 +117,21 @@ const loginRequest = useRequest(
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
           <Button variant="ghost" size="icon" class="bg-background/80 backdrop-blur-sm hover:bg-background/90">
-            <Sun v-if="appStore.themeMode === 'light'" class="h-5 w-5" />
-            <Moon v-else-if="appStore.themeMode === 'dark'" class="h-5 w-5" />
+            <Sun v-if="themeStore.themeMode === 'light'" class="h-5 w-5" />
+            <Moon v-else-if="themeStore.themeMode === 'dark'" class="h-5 w-5" />
             <Monitor v-else class="h-5 w-5" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem @click="appStore.setTheme('light')" :class="{ 'bg-accent': appStore.themeMode === 'light' }">
+          <DropdownMenuItem @click="themeStore.setTheme('light')" :class="{ 'bg-accent': themeStore.themeMode === 'light' }">
             <Sun class="mr-2 h-4 w-4" />
             Light
           </DropdownMenuItem>
-          <DropdownMenuItem @click="appStore.setTheme('dark')" :class="{ 'bg-accent': appStore.themeMode === 'dark' }">
+          <DropdownMenuItem @click="themeStore.setTheme('dark')" :class="{ 'bg-accent': themeStore.themeMode === 'dark' }">
             <Moon class="mr-2 h-4 w-4" />
             Dark
           </DropdownMenuItem>
-          <DropdownMenuItem @click="appStore.setTheme('system')" :class="{ 'bg-accent': appStore.themeMode === 'system' }">
+          <DropdownMenuItem @click="themeStore.setTheme('system')" :class="{ 'bg-accent': themeStore.themeMode === 'system' }">
             <Monitor class="mr-2 h-4 w-4" />
             System
           </DropdownMenuItem>
@@ -174,7 +178,7 @@ const loginRequest = useRequest(
           <div class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
             <Wind class="w-7 h-7 text-white" />
           </div>
-          <h1 class="text-4xl font-bold text-white tracking-tight">BreezeAdmin</h1>
+          <h1 class="text-4xl font-bold text-white tracking-tight">{{ appTitle }}</h1>
         </div>
         <p class="text-white/80 text-lg mt-2">{{ t('login.brandSlogan') || '轻盈·高效·优雅' }}</p>
       </div>
@@ -212,7 +216,7 @@ const loginRequest = useRequest(
 
       <!-- Bottom tagline -->
       <div class="relative z-10 text-white/40 text-sm">
-        <p>{{ t('login.copyright') || '© 2024 BreezeAdmin. All rights reserved.' }}</p>
+        <p>{{ t('login.copyright') || `© 2026 ${appTitle}. All rights reserved.` }}</p>
       </div>
     </div>
 
@@ -228,7 +232,7 @@ const loginRequest = useRequest(
             <div class="w-12 h-12 bg-primary/10 dark:bg-primary/20 rounded-xl flex items-center justify-center">
               <Wind class="w-7 h-7 text-primary" />
             </div>
-            <h1 class="text-2xl font-bold">BreezeAdmin</h1>
+            <h1 class="text-2xl font-bold">{{ appTitle }}</h1>
           </div>
         </div>
 

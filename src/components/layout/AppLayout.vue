@@ -11,7 +11,7 @@ import { useAppStore } from '@/stores/app'
 import { useThemeStore } from '@/stores/theme'
 import { useTabsStore } from '@/stores/tabs'
 import { useTabs } from '@/composables/use-tabs'
-import { computed, watch, onMounted } from 'vue'
+import { computed, watch } from 'vue'
 
 const appStore = useAppStore()
 const themeStore = useThemeStore()
@@ -23,18 +23,6 @@ const routerViewKey = computed(() => `${route.path}__${tabsStore.refreshKey}`)
 
 // 初始化 tabs
 useTabs()
-
-// 初始化主题颜色
-onMounted(() => {
-  themeStore.initTheme()
-})
-
-// 侧边栏宽度计算 — 从 themeStore 读取
-const sidebarWidth = computed(() =>
-  appStore.sidebarCollapsed
-    ? `${themeStore.sidebarCollapsedWidth}px`
-    : `${themeStore.sidebarWidth}px`
-)
 
 // 路由变化时关闭移动端 Sheet
 watch(() => route.path, () => {
@@ -65,8 +53,8 @@ watch(() => route.path, () => {
 
     <!-- Main Content -->
     <div
-      class="flex flex-col h-screen overflow-hidden md:pl-[var(--sidebar-width)] transition-all duration-300"
-      :style="{ '--sidebar-width': sidebarWidth }"
+      class="flex flex-col h-screen overflow-hidden transition-all duration-300"
+      :class="appStore.sidebarCollapsed ? 'md:pl-[var(--sidebar-collapsed-width)]' : 'md:pl-[var(--sidebar-width)]'"
     >
       <Header
         class="flex-shrink-0"

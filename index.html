@@ -4,7 +4,79 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BreezeAdmin</title>
+    <title>%VITE_APP_TITLE%</title>
+    <script>
+      (function () {
+        try {
+          // ===== FOUC 防护：暗色模式 + 颜色 + CSS 变量 =====
+          // 内联：在 Vue 挂载前同步注入
+
+          // --- 暗色模式检测 ---
+          var appRaw = localStorage.getItem('app');
+          var appData = appRaw ? JSON.parse(appRaw) : {};
+          var isDark;
+          if (appData.themeMode === 0) {
+            isDark = false;
+          } else if (appData.themeMode === 1) {
+            isDark = true;
+          } else {
+            isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          }
+          if (isDark) {
+            document.documentElement.classList.add('dark');
+          }
+
+          // --- 主题色 + 布局 CSS 变量 ---
+          var themeRaw = localStorage.getItem('theme-config');
+          var themeData = themeRaw ? JSON.parse(themeRaw) : {};
+          var root = document.documentElement;
+          if (themeData.primaryColor) {
+            root.style.setProperty('--primary', hexToHsl(themeData.primaryColor));
+            root.style.setProperty('--ring', hexToHsl(themeData.primaryColor));
+            var parts = hexToHsl(themeData.primaryColor).split(' ');
+            var infoL = Math.min(parseFloat(parts[2]) + 15, 80);
+            root.style.setProperty('--info', parts[0] + ' ' + parts[1] + ' ' + infoL + '%');
+          }
+          if (themeData.successColor) {
+            root.style.setProperty('--success', hexToHsl(themeData.successColor));
+          }
+          if (themeData.warningColor) {
+            root.style.setProperty('--warning', hexToHsl(themeData.warningColor));
+          }
+          if (themeData.errorColor) {
+            root.style.setProperty('--destructive', hexToHsl(themeData.errorColor));
+          }
+          // 布局
+          if (themeData.sidebarWidth) root.style.setProperty('--sidebar-width', themeData.sidebarWidth + 'px');
+          if (themeData.sidebarCollapsedWidth) root.style.setProperty('--sidebar-collapsed-width', themeData.sidebarCollapsedWidth + 'px');
+          if (themeData.footerHeight) root.style.setProperty('--footer-height', themeData.footerHeight + 'px');
+
+          // --- 工具函数 ---
+          function hexToHsl(hex) {
+            var cleaned = hex.replace('#', '');
+            var num = parseInt(cleaned, 16);
+            var r = (num >> 16) & 255;
+            var g = (num >> 8) & 255;
+            var b = num & 255;
+            var max = Math.max(r, g, b), min = Math.min(r, g, b);
+            var l = (max + min) / 2;
+            if (max === min) return '0 0 ' + Math.round(l / 255 * 1000) / 10 + '%';
+            var d = max - min;
+            var s = l > 127.5 ? d / (510 - max - min) : d / (max + min);
+            var h;
+            if (max === r) {
+              h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+            } else if (max === g) {
+              h = ((b - r) / d + 2) / 6;
+            } else {
+              h = ((r - g) / d + 4) / 6;
+            }
+            var rnd = function (n) { return Math.round(n * 10) / 10; };
+            return rnd(h * 360) + ' ' + rnd(s * 100) + '% ' + rnd(l / 255 * 100) + '%';
+          }
+        } catch (e) { /* ignore */ }
+      })();
+    </script>
   </head>
   <body>
     <div id="app"></div>

@@ -87,6 +87,29 @@ export function getRouteMeta(path: string): RouteMetaInfo | null {
 }
 
 /**
+ * 获取指定路径的直接子路由（非隐藏）
+ */
+export function getChildRoutes(parentPath: string): RouteMetaInfo[] {
+  const pathMap = getRoutePathMap()
+  const parentRoute = pathMap.get(parentPath)
+
+  if (!parentRoute?.children) return []
+
+  return parentRoute.children
+    .filter(child => !child.meta?.hidden)
+    .map(child => {
+      const childPath = child.path === '' ? parentPath : `${parentPath}/${child.path}`
+      return {
+        path: childPath,
+        title: child.meta?.title as string | undefined,
+        icon: child.meta?.icon as IconName | undefined,
+        hidden: false,
+        hasComponent: !!child.component
+      }
+    })
+}
+
+/**
  * 根据路径构建面包屑（带缓存查找）
  * 注意：title 是原始的 i18n key，回退到 segment 名称
  */

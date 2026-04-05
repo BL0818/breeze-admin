@@ -35,6 +35,9 @@
     --warning-foreground: 222.2 84% 4.9%;
     --info: 217 91% 60%;
     --info-foreground: 210 40% 98%;
+    --sidebar-width: 280px;
+    --sidebar-collapsed-width: 80px;
+    --footer-height: 48px;
   }
 
   .dark {

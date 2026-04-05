@@ -1,5 +1,7 @@
 # BreezeAdmin - Vue 3 企业管理后台系统架构文档
 
+> 最后更新：2026-04-05 14:46
+
 ## 项目概述
 
 **项目名称：** BreezeAdmin
@@ -254,7 +256,7 @@ src/
 ├── locales/
 │   ├── en.ts                 # 英文翻译
 │   └── zh.ts                 # 中文翻译
-└── main.ts                   # 应用入口（Pinia + MSW + i18n + 路由）
+└── main.ts                   # 应用入口（Pinia + MSW(可选) + i18n + 路由）
 ```
 
 ## 核心功能实现
@@ -316,7 +318,7 @@ function getAuthToken(): string | null { ... }
 function handle401(): void { ... }
 
 export const alovaInstance = createAlova({
-  baseURL: 'http://localhost:2018',
+  baseURL: import.meta.env.VITE_SERVICE_BASE_URL,
   beforeRequest(method) {
     // 注入 Authorization: Bearer <token>
     // POST/PUT/PATCH 自动注入 Content-Type: application/json
@@ -377,7 +379,7 @@ export { queryApi } from './modules/query'
 
 #### 4.4 Mock 服务层 (`src/mocks/handlers.ts`)
 
-MSW Mock Handlers，所有 Zod Schema 从 `@/types/api-schema` 统一导入。
+MSW Mock Handlers，所有 Zod Schema 从 `@/types/api-schema` 统一导入。通过环境变量 `VITE_ENABLE_MOCK` 控制启用（`main.ts` 中判断 `VITE_ENABLE_MOCK === 'true'`）。
 
 ```typescript
 import { LoginRequestSchema, ForgotPasswordRequestSchema } from '@/types/api-schema'
@@ -636,30 +638,44 @@ mergeDynamicRoutes(backendMenu)  // 合并到动态路由表
                          ▼
 ┌──────────────────────────────────────────────────────────────┐
 │              themeStore (Pinia, key: theme-config)            │
-│  ┌─────────────┐  ┌──────────────────┐  ┌────────────────┐  │
-│  │ 颜色配置     │  │ 布局配置          │  │ 通用配置        │  │
-│  │ primaryColor│  │ showTabsBar       │  │ showLanguageBtn│  │
-│  │ successColor│  │ tabsKeepAlive     │  │ showThemeBtn   │  │
-│  │ warningColor│  │ tabsMiddleClick.. │  │ showFullscreen │  │
-│  │ errorColor  │  │ showBreadcrumb    │  └────────────────┘  │
-│  └──────┬──────┘  │ showBreadcrumbIcon│                      │
-│         │         │ sidebarWidth      │  persist → localStorage│
-│         │         │ sidebarCollapsedW │  版本化：THEME_STORE_VERSION │
-│         │         │ showFooter        │  beforeRestore: 版本检测 │
-│         │         │ footerHeight      │  afterRestore: 默认值回填│
-│         │         └──────────────────┘                      │
-│         │   applyColors()                                     │
+│  ┌──────────────┐  ┌──────────────────┐  ┌────────────────┐  │
+│  │ 暗色模式      │  │ 布局配置          │  │ 通用配置        │  │
+│  │ isDark       │  │ showTabsBar       │  │ showLanguageBtn│  │
+│  │ themeMode    │  │ tabsKeepAlive     │  │ showThemeBtn   │  │
+│  │ toggleTheme  │  │ tabsMiddleClick.. │  │ showFullscreen │  │
+│  │ setTheme     │  │ showBreadcrumb    │  └────────────────┘  │
+│  └──────────────┘  │ showBreadcrumbIcon│                      │
+│  ┌─────────────┐   │ sidebarWidth      │  persist → localStorage│
+│  │ 颜色配置     │   │ sidebarCollapsedW │  版本化：THEME_STORE_VERSION │
+│  │ primaryColor│   │ showFooter        │  beforeRestore: 版本检测 │
+│  │ successColor│   │ footerHeight      │  afterRestore: 默认值回填│
+│  │ warningColor│   └──────────────────┘  + 旧 app 键迁移     │
+│  │ errorColor  │                                              │
+│  └──────┬──────┘                                              │
+│         │  applyColors()  +  applyLayout()                    │
 └─────────┼────────────────────────────────────────────────────┘
           │
           ▼
 ┌──────────────────────────────────────────────────────────────┐
 │              CSS 变量注入（document.documentElement）            │
-│  --primary    ← primaryColor (hex → HSL)                      │
-│  --ring       ← primaryColor                                  │
-│  --info       ← primaryColor 亮度 +15%                        │
-│  --success    ← successColor                                  │
-│  --warning    ← warningColor                                  │
-│  --destructive← errorColor                                    │
+│                                                               │
+│  颜色变量（applyColors）:                                        │
+│  --primary          ← primaryColor                            │
+│  --primary-foreground ← computeForeground(primaryColor)       │
+│  --ring             ← primaryColor                            │
+│  --info             ← computeInfoColor(primaryColor)          │
+│  --info-foreground  ← computeForeground(primaryColor)         │
+│  --success          ← successColor                            │
+│  --success-foreground ← computeForeground(successColor)       │
+│  --warning          ← warningColor                            │
+│  --warning-foreground ← computeForeground(warningColor)       │
+│  --destructive      ← errorColor                              │
+│  --destructive-foreground ← computeForeground(errorColor)     │
+│                                                               │
+│  布局变量（applyLayout）:                                        │
+│  --sidebar-width          ← sidebarWidth                      │
+│  --sidebar-collapsed-width← sidebarCollapsedWidth             │
+│  --footer-height          ← footerHeight                      │
 │                                                               │
 │  使用：hsl(var(--primary)) → Tailwind bg-primary / text-primary│
 └──────────────────────────────────────────────────────────────┘
@@ -671,26 +687,58 @@ mergeDynamicRoutes(backendMenu)  // 合并到动态路由表
 |------|------|------|------|
 | `hexToHsl(hex)` | `#3b82f6` | `"221.2 83.2% 53.3%"` | 转 shadcn CSS 变量格式 |
 | `hexToHslObject(hex)` | `#3b82f6` | `{ h: 221.2, s: 83.2, l: 53.3 }` | 中间计算 |
-| `computeInfoColor(hex)` | `#3b82f6` | `"221.2 83.2% 68.3%"` | 信息色 = 主色亮度 +15% |
+| `computeInfoColor(hex)` | `#3b82f6` | `"221.2 83.2% 68.3%"` | 信息色 = 主色亮度 +15%（上限 80%） |
+| `computeForeground(hex)` | `#3b82f6` | `"222.2 84% 4.9%"` 或 `"210 40% 98%"` | 根据背景色亮度自动选择深/浅前景色 |
 
 **设计要点**：
 - CSS 变量存储纯 HSL 值（如 `221.2 83.2% 53.3%`），Tailwind 通过 `hsl(var(--primary))` 引用
 - 信息色自动从主色派生（亮度 +15%，上限 80%），用户无需手动配置
+- 前景色自动适配：亮度 > 50% 使用深色前景，否则使用浅色前景，确保文字可读性
 - 预设色板提供 7 种主题色（blue / violet / fuchsia / rose / orange / emerald / cyan），支持自定义颜色选择器
 
-##### 4.10.3 持久化与版本迁移
+##### 4.10.3 暗色模式
+
+暗色模式通过 `@vueuse/core` 的 `useDark` + `usePreferredDark` 实现，支持三种切换模式：
 
 ```typescript
-const THEME_STORE_VERSION = 2
+const isDark = useDark({ storage: { /* 不写入 localStorage，由 persist 统一管理 */ } })
+const preferredDark = usePreferredDark()
+const themeMode = ref<'light' | 'dark' | 'system'>('system')
+```
+
+| 方法 | 行为 |
+|------|------|
+| `toggleTheme()` | 切换亮/暗（直接反转 `isDark`） |
+| `setTheme(mode)` | `'light'` / `'dark'` / `'system'`，system 模式跟随系统偏好 |
+
+**系统主题联动**：`watch(preferredDark)` 监听系统主题变化，当 `themeMode === 'system'` 时自动同步。
+
+**持久化注意**：`useDark` 的 `storage` 被置空（`setItem: () => {}`），由 Pinia `persist.paths` 统一管理 `isDark` 和 `themeMode` 的持久化，避免双重写入。
+
+##### 4.10.4 持久化与版本迁移
+
+```typescript
+const THEME_STORE_VERSION = 3
+const THEME_STORAGE_KEY = 'theme-config'
 
 persist: {
-  key: 'theme-config',
+  key: THEME_STORAGE_KEY,
   storage: localStorage,
+  paths: [
+    'isDark', 'themeMode',
+    'primaryColor', 'successColor', 'warningColor', 'errorColor',
+    'showTabsBar', 'tabsKeepAlive', 'tabsMiddleClickClose',
+    'showBreadcrumb', 'showBreadcrumbIcon',
+    'sidebarWidth', 'sidebarCollapsedWidth',
+    'showFooter', 'footerHeight',
+    'showLanguageBtn', 'showThemeBtn', 'showFullscreenBtn',
+  ],
   beforeRestore: () => {
     // 版本不兼容（无 _version 或旧版本）→ 清除旧缓存
   },
   afterRestore: (ctx) => {
-    // 默认值回填：缺失字段用 DEFAULT_*/DEFAULT_LAYOUT/DEFAULT_GENERAL 补全
+    // 1. 默认值回填：缺失字段用 DEFAULT_COLORS/DEFAULT_LAYOUT/DEFAULT_GENERAL 补全
+    // 2. 迁移：从旧 'app' 键读取 isDark/themeMode（兼容旧版本 store 结构）
   },
 }
 ```
@@ -698,9 +746,9 @@ persist: {
 **版本迁移策略**：
 - 升级 `THEME_STORE_VERSION` 即可触发旧缓存清理
 - `afterRestore` 确保新增字段的向后兼容
-- `initTheme()` 在首次启动时写入版本号
+- `initTheme()` 在首次启动时写入版本号，并调用 `applyColors()` + `applyLayout()` 初始化 CSS 变量
 
-##### 4.10.4 主题设置面板 (`src/components/layout/ThemeSettings.vue`)
+##### 4.10.5 主题设置面板 (`src/components/layout/ThemeSettings.vue`)
 
 使用 shadcn-vue `Sheet` 组件实现右侧抽屉面板，分为三大区域：
 
@@ -712,7 +760,7 @@ persist: {
 
 **重要**：Switch 组件底层为 reka-ui `SwitchRoot`，使用 `v-model`（绑定 `modelValue`），**不是** `v-model:checked`。
 
-##### 4.10.5 布局集成
+##### 4.10.6 布局集成
 
 所有布局组件均从 `themeStore` 读取配置并实时响应：
 
@@ -841,6 +889,50 @@ const request = useRequest(
 | Mock 无重复 z.object | `grep "z\.object" src/mocks/handlers.ts` 应为空 |
 | BusinessError 在 request.ts 中定义导出 | `grep "export class BusinessError" src/utils/request.ts` 非空 |
 | 每个 MSW handler 包含 delay | 每个 handler 函数体内含 `delay(` |
+
+## 环境变量配置
+
+项目采用 Vite 标准环境文件分层方案，文件名严格匹配 Vite 模式自动加载机制：
+
+### 文件结构
+
+| 文件 | 加载时机 | 用途 | 是否提交 |
+|------|---------|------|---------|
+| `.env` | 所有环境 | 全局共享变量（应用标题、基础路径） | ✅ 提交 |
+| `.env.development` | `vite` (mode=development) | 开发环境 API 地址 | ✅ 提交 |
+| `.env.production` | `vite build` (mode=production) | 生产环境 API 地址 | ✅ 提交 |
+| `.env.local` | 当前环境，优先级最高 | 本地覆盖（含敏感信息） | ❌ 不提交 |
+| `.env.*.local` | 对应模式的本地覆盖 | 模式特定的本地配置 | ❌ 不提交 |
+
+### 环境变量清单
+
+| 变量 | `.env` | `.env.development` | `.env.production` |
+|------|--------|-------------------|------------------|
+| `VITE_APP_TITLE` | `BreezeAdmin` | — | — |
+| `VITE_BASE_URL` | `/` | — | — |
+| `VITE_SERVICE_BASE_URL` | — | `http://localhost:2018` | `https://api.example.com` |
+| `VITE_ENABLE_MOCK` | — | `true` | `false` |
+
+### TypeScript 类型声明 (`src/env.d.ts`)
+
+自定义 `VITE_*` 变量已通过 `ImportMetaEnv` 接口声明，提供 IDE 自动补全和类型检查：
+
+```typescript
+interface ImportMetaEnv {
+  readonly VITE_APP_TITLE: string
+  readonly VITE_BASE_URL: string
+  readonly VITE_SERVICE_BASE_URL: string
+  readonly VITE_ENABLE_MOCK: string
+}
+```
+
+### 加载优先级
+
+```
+.env.local > .env.{mode}.local > .env.{mode} > .env
+```
+
+**注意**：`.env.local` 和 `.env.*.local` 已在 `.gitignore` 中排除，用于存放敏感配置（API 密钥、真实 token 等），不会被提交到仓库。
 
 ## 构建产物分析
 

@@ -18,7 +18,10 @@ import {
   FileText,
   ShieldCheck,
   Crown,
-  Code
+  Code,
+  Layers,
+  FolderTree,
+  File
 } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth'
@@ -69,9 +72,13 @@ const iconMap: Record<string, Component> = {
   ShieldCheck,
   Crown,
   Code,
+  Layers,
+  FolderTree,
+  File,
 }
 
 const { t } = useI18n()
+const appTitle = import.meta.env.VITE_APP_TITLE || 'BreezeAdmin'
 const route = useRoute()
 const authStore = useAuthStore()
 const themeStore = useThemeStore()
@@ -187,7 +194,7 @@ watch(() => route.path, (newPath) => {
         isCollapsed ? '' : ''
       )"
       :style="{
-        width: isCollapsed ? `${themeStore.sidebarCollapsedWidth}px` : `${themeStore.sidebarWidth}px`
+        width: isCollapsed ? 'var(--sidebar-collapsed-width)' : 'var(--sidebar-width)'
       }"
     >
       <div class="flex h-full flex-col">
@@ -197,7 +204,7 @@ watch(() => route.path, (newPath) => {
             <Wind class="w-5 h-5 text-primary" />
           </div>
           <span v-if="!isCollapsed" class="text-xl font-bold ml-3 overflow-hidden whitespace-nowrap transition-all">
-            BreezeAdmin
+            {{ appTitle }}
           </span>
         </div>
 
@@ -219,7 +226,7 @@ watch(() => route.path, (newPath) => {
                       :class="cn(
                         'flex items-center justify-center rounded-lg p-2.5 transition-colors w-full',
                         'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                        isExactActive(item.path) && 'bg-accent text-accent-foreground',
+                        isExactActive(item.path) && 'bg-primary/10 text-primary',
                         isSubActive(item.path) && 'text-primary'
                       )"
                     >
@@ -247,7 +254,7 @@ watch(() => route.path, (newPath) => {
                           :class="cn(
                             'flex items-center gap-2.5 rounded-md px-3 py-1.5 text-sm transition-colors',
                             'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                            isExactActive(level3.path) && 'bg-accent text-accent-foreground'
+                            isExactActive(level3.path) && 'bg-primary/10 text-primary'
                           )"
                         >
                           <component :is="level3.icon" class="h-3.5 w-3.5 shrink-0" />
@@ -262,7 +269,7 @@ watch(() => route.path, (newPath) => {
                         :class="cn(
                           'flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors',
                           'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                          isExactActive(level2.path) && 'bg-accent text-accent-foreground'
+                          isExactActive(level2.path) && 'bg-primary/10 text-primary'
                         )"
                       >
                         <component :is="level2.icon" class="h-4 w-4 shrink-0" />
@@ -280,7 +287,7 @@ watch(() => route.path, (newPath) => {
                       :class="cn(
                         'flex items-center justify-center rounded-lg p-2.5 transition-colors',
                         'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                        isExactActive(item.path) && 'bg-accent text-accent-foreground'
+                        isExactActive(item.path) && 'bg-primary/10 text-primary'
                       )"
                     >
                       <component :is="item.icon" class="h-5 w-5 shrink-0" />
@@ -301,7 +308,7 @@ watch(() => route.path, (newPath) => {
                       :class="cn(
                         'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors w-full',
                         'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                        isExactActive(item.path) && 'bg-accent text-accent-foreground',
+                        isExactActive(item.path) && 'bg-primary/10 text-primary',
                         isSubActive(item.path) && 'text-primary'
                       )"
                     >
@@ -321,7 +328,7 @@ watch(() => route.path, (newPath) => {
                               :class="cn(
                                 'flex items-center gap-3 rounded-lg pl-9 pr-3 py-2 text-sm transition-colors w-full',
                                 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                                isExactActive(level2.path) && 'bg-accent text-accent-foreground',
+                                isExactActive(level2.path) && 'bg-primary/10 text-primary',
                                 isSubActive(level2.path) && 'text-primary'
                               )"
                             >
@@ -340,7 +347,7 @@ watch(() => route.path, (newPath) => {
                                 :class="cn(
                                   'flex items-center gap-3 rounded-lg pl-12 pr-3 py-2 text-sm transition-colors w-full',
                                   'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                                  isExactActive(level3.path) && 'bg-accent text-accent-foreground'
+                                  isExactActive(level3.path) && 'bg-primary/10 text-primary'
                                 )"
                               >
                                 <component :is="level3.icon" class="h-4 w-4 shrink-0" />
@@ -356,7 +363,7 @@ watch(() => route.path, (newPath) => {
                           :class="cn(
                             'flex items-center gap-3 rounded-lg pl-9 pr-3 py-2 text-sm transition-colors w-full',
                             'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                            isExactActive(level2.path) && 'bg-accent text-accent-foreground'
+                            isExactActive(level2.path) && 'bg-primary/10 text-primary'
                           )"
                         >
                           <component :is="level2.icon" class="h-4 w-4 shrink-0" />
@@ -373,7 +380,7 @@ watch(() => route.path, (newPath) => {
                   :class="cn(
                     'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                     'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                    isExactActive(item.path) && 'bg-accent text-accent-foreground'
+                    isExactActive(item.path) && 'bg-primary/10 text-primary'
                   )"
                 >
                   <component :is="item.icon" class="h-5 w-5 shrink-0" />

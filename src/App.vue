@@ -2,15 +2,17 @@
 import 'vue-sonner/style.css'
 import { RouterView } from 'vue-router'
 import { useAppStore } from '@/stores/app'
+import { useThemeStore } from '@/stores/theme'
 import { watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Toaster } from '@/components/ui/sonner'
 
 const appStore = useAppStore()
+const themeStore = useThemeStore()
 const { locale } = useI18n()
 
-// 监听主题变化，同步到 html 元素
-watch(() => appStore.isDark, (isDark) => {
+// 监听主题变化，同步到 html 元素（useDark 内部也会操作，此处做双保险）
+watch(() => themeStore.isDark, (isDark) => {
   if (isDark) {
     document.documentElement.classList.add('dark')
   } else {
@@ -25,7 +27,7 @@ watch(() => appStore.language, (lang) => {
 
 onMounted(() => {
   // 确保初始状态同步
-  if (appStore.isDark) {
+  if (themeStore.isDark) {
     document.documentElement.classList.add('dark')
   } else {
     document.documentElement.classList.remove('dark')

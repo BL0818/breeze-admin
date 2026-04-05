@@ -10,7 +10,7 @@ import {
   GridComponent
 } from 'echarts/components'
 import type { EChartsOption } from 'echarts'
-import { useAppStore } from '@/stores/app'
+import { useThemeStore } from '@/stores/theme'
 
 // 注册 ECharts 组件
 use([CanvasRenderer, LineChart, TitleComponent, TooltipComponent, GridComponent])
@@ -19,11 +19,11 @@ const props = defineProps<{
   data: { month: string; sales: number }[]
 }>()
 
-const appStore = useAppStore()
+const themeStore = useThemeStore()
 
 // 根据主题获取颜色 - 使用 indigo (4f46e5)
 const chartColor = computed(() => {
-  return appStore.isDark ? '#818cf8' : 'rgb(99, 102, 241)'
+  return themeStore.isDark ? '#818cf8' : 'rgb(99, 102, 241)'
 })
 
 const chartOptions = computed<EChartsOption>(() => ({

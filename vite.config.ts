@@ -65,6 +65,7 @@ export default defineConfig(({ mode }) => {
       }
     },
     server: {
+      host: true,
       port: 2018
     },
     optimizeDeps: {

@@ -59,6 +59,38 @@ export const ROUTES_META: AppRouteConfig[] = [
           icon: 'Search'
         }
       },
+      // ==================== 多级菜单示例 ====================
+      {
+        path: 'menu-level',
+        name: 'MenuLevel',
+        redirect: '/menu-level/level2/level3',
+        meta: {
+          title: 'nav.menuLevel1',
+          icon: 'Layers',
+        },
+        children: [
+          {
+            path: 'level2',
+            name: 'MenuLevel2',
+            redirect: '/menu-level/level2/level3',
+            meta: {
+              title: 'nav.menuLevel2',
+              icon: 'FolderTree',
+            },
+            children: [
+              {
+                path: 'level3',
+                name: 'MenuLevel3',
+                component: () => import('@/views/menu-level/Level3.vue'),
+                meta: {
+                  title: 'nav.menuLevel3',
+                  icon: 'File',
+                }
+              }
+            ]
+          }
+        ]
+      },
       // ==================== 系统功能 ====================
       {
         path: 'system',
