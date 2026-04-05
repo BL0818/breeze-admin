@@ -9,7 +9,8 @@ import './styles/globals.css'
 
 async function bootstrap() {
   // Debug: 验证 env 变量是否正确注入
-  console.log('[BreezeAdmin] VITE_ENABLE_MOCK =', import.meta.env.VITE_ENABLE_MOCK)
+  const mockFlag = import.meta.env.VITE_ENABLE_MOCK
+  console.log('[BreezeAdmin] VITE_ENABLE_MOCK =', mockFlag, typeof mockFlag)
   console.log('[BreezeAdmin] VITE_SERVICE_BASE_URL =', import.meta.env.VITE_SERVICE_BASE_URL)
 
   const pinia = createPinia()
@@ -17,15 +18,14 @@ async function bootstrap() {
 
   const app = createApp(App)
 
-  // 根据环境变量决定是否启动 MSW Mock 服务
-  if (import.meta.env.VITE_ENABLE_MOCK === 'true') {
+  // 根据环境变量决定是否启动 MSW Mock 服务（兼容 boolean 和 string 类型）
+  if (mockFlag === true || mockFlag === 'true') {
     console.log('[BreezeAdmin] MSW: 开始初始化...')
     try {
       const { worker } = await import('./mocks/browser')
       console.log('[BreezeAdmin] MSW: browser 模块已加载', worker)
       await worker.start({
         onUnhandledRequest: 'bypass',
-        quiet: false,
       })
       console.log('[BreezeAdmin] MSW: Service Worker 已启动')
     } catch (e) {
