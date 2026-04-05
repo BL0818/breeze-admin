@@ -25,7 +25,6 @@ import {
 } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth'
-import { useThemeStore } from '@/stores/theme'
 import { useI18n } from 'vue-i18n'
 import { ROUTES_META } from '@/router/routes-config'
 import { hasPermission } from '@/router/permissions'
@@ -81,7 +80,6 @@ const { t } = useI18n()
 const appTitle = import.meta.env.VITE_APP_TITLE || 'BreezeAdmin'
 const route = useRoute()
 const authStore = useAuthStore()
-const themeStore = useThemeStore()
 
 // 展开状态管理
 const expandedMenus = ref<Set<string>>(new Set())

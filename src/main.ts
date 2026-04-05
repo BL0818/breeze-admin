@@ -5,7 +5,6 @@ import App from './App.vue'
 import router from './router'
 import { i18n } from './locales'
 import { useAuthStore } from './stores/auth'
-import { useThemeStore } from './stores/theme'
 import './styles/globals.css'
 
 async function bootstrap() {

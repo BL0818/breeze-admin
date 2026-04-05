@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { ExternalLink } from 'lucide-vue-next'
-import { useThemeStore } from '@/stores/theme'
 
-const themeStore = useThemeStore()
 const appTitle = import.meta.env.VITE_APP_TITLE || 'BreezeAdmin'
 </script>
 
