@@ -18,6 +18,13 @@ dist/
 typed-router.d.ts
 vite.config.d.ts
 
+# Environment variables
+.env
+.env.*
+!.env.example
+
 # Local env overrides (contains secrets, not tracked)
 .env.local
 .env.*.local
+
+.vercel
