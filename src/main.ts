@@ -18,8 +18,10 @@ async function bootstrap() {
 
   const app = createApp(App)
 
-  // 根据环境变量决定是否启动 MSW Mock 服务（兼容 boolean 和 string 类型）
-  if (mockFlag === true || mockFlag === 'true') {
+  // 根据环境变量决定是否启动 MSW Mock 服务
+  // Vercel 可能注入 boolean 而非 string，用宽松比较兼容两种情况
+  const enableMock = String(import.meta.env.VITE_ENABLE_MOCK) === 'true'
+  if (enableMock) {
     console.log('[BreezeAdmin] MSW: 开始初始化...')
     try {
       const { worker } = await import('./mocks/browser')
