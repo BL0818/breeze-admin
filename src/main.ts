@@ -19,26 +19,18 @@ async function bootstrap() {
 
   // 根据环境变量决定是否启动 MSW Mock 服务
   if (import.meta.env.VITE_ENABLE_MOCK === 'true') {
-    const { worker } = await import('./mocks/browser')
-    await worker.start({
-      onUnhandledRequest: 'bypass',
-      quiet: true,
-    })
-
-    // 页面从后台恢复时，重启 MSW 以确保 service worker 仍然活跃
-    // 浏览器可能终止后台页面的 SW 进程，直接 worker.start() 会被 MSW 视为
-    // 冗余调用而跳过，必须先 stop 再 start 强制重新注册
-    document.addEventListener('visibilitychange', async () => {
-      if (!document.hidden) {
-        try {
-          await worker.stop()
-        } catch { /* worker 可能已被浏览器终止，忽略 */ }
-        await worker.start({
-          onUnhandledRequest: 'bypass',
-          quiet: true,
-        })
-      }
-    })
+    console.log('[BreezeAdmin] MSW: 开始初始化...')
+    try {
+      const { worker } = await import('./mocks/browser')
+      console.log('[BreezeAdmin] MSW: browser 模块已加载', worker)
+      await worker.start({
+        onUnhandledRequest: 'bypass',
+        quiet: false,
+      })
+      console.log('[BreezeAdmin] MSW: Service Worker 已启动')
+    } catch (e) {
+      console.error('[BreezeAdmin] MSW: 初始化失败', e)
+    }
   }
 
   // 关键：在路由使用之前初始化 store，确保 pinia-plugin-persistedstate 已恢复数据
