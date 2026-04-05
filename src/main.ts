@@ -8,6 +8,10 @@ import { useAuthStore } from './stores/auth'
 import './styles/globals.css'
 
 async function bootstrap() {
+  // Debug: 验证 env 变量是否正确注入
+  console.log('[BreezeAdmin] VITE_ENABLE_MOCK =', import.meta.env.VITE_ENABLE_MOCK)
+  console.log('[BreezeAdmin] VITE_SERVICE_BASE_URL =', import.meta.env.VITE_SERVICE_BASE_URL)
+
   const pinia = createPinia()
   pinia.use(piniaPluginPersistedstate)
 
@@ -40,7 +44,7 @@ async function bootstrap() {
   // 关键：在路由使用之前初始化 store，确保 pinia-plugin-persistedstate 已恢复数据
   app.use(pinia)
   // pinia-plugin-persistedstate 会在 store 首次访问时自动恢复数据，初始化 store 触发恢复
-  useAuthStore() // eslint-disable-line @typescript-eslint/no-unused-expressions
+  useAuthStore()  
 
   app.use(router)
   app.use(i18n)
