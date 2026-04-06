@@ -10,6 +10,12 @@ export default defineConfig(({ mode }) => {
 
   const plugins = [
     vue(),
+    {
+      name: 'html-title-fallback',
+      transformIndexHtml(html: string) {
+        return html.replace('%VITE_APP_TITLE%', env.VITE_APP_TITLE || 'BreezeAdmin')
+      }
+    },
     AutoImport({
       imports: ['vue', 'vue-router', 'pinia'],
       dts: 'src/auto-imports.d.ts',
