@@ -33,7 +33,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useFullscreen } from '@vueuse/core'
 import { getIcon } from '@/lib/icon-map'
-import { buildBreadcrumbs, getChildRoutes } from '@/lib/router-helpers'
+import { buildBreadcrumbs, getChildRoutes, type RouteMetaInfo } from '@/lib/router-helpers'
+import type { Component } from 'vue'
 
 const emit = defineEmits<{
   (e: 'toggle-sidebar'): void
@@ -84,8 +85,16 @@ const breadcrumbItems = computed(() => {
   }))
 })
 
+interface BreadcrumbEntry {
+  path: string
+  title: string
+  icon: Component
+  hasComponent: boolean
+  children: RouteMetaInfo[]
+}
+
 // 翻译面包屑标题 + 子路由信息
-const translatedBreadcrumbs = computed(() => {
+const translatedBreadcrumbs = computed<BreadcrumbEntry[]>(() => {
   return breadcrumbItems.value.map(item => ({
     ...item,
     title: t(item.title),
