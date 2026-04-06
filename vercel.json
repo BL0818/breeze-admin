@@ -1,4 +1,7 @@
 {
   "name": "breeze-admin",
-  "framework": "vite"
+  "framework": "vite",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }

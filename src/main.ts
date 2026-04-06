@@ -19,20 +19,24 @@ async function bootstrap() {
   const app = createApp(App)
 
   // 根据环境变量决定是否启动 MSW Mock 服务
-  // Vercel 可能注入 boolean 而非 string，用宽松比较兼容两种情况
   const enableMock = String(import.meta.env.VITE_ENABLE_MOCK) === 'true'
   if (enableMock) {
     console.log('[BreezeAdmin] MSW: 开始初始化...')
     try {
       const { worker } = await import('./mocks/browser')
-      console.log('[BreezeAdmin] MSW: browser 模块已加载', worker)
+      console.log('[BreezeAdmin] MSW: browser 模块已加载')
       await worker.start({
         onUnhandledRequest: 'bypass',
+        serviceWorker: {
+          url: '/mockServiceWorker.js',
+        },
       })
-      console.log('[BreezeAdmin] MSW: Service Worker 已启动')
+      console.log('[BreezeAdmin] MSW: Service Worker 已启动, 拦截列表:', worker.listHandlers())
     } catch (e) {
       console.error('[BreezeAdmin] MSW: 初始化失败', e)
     }
+  } else {
+    console.log('[BreezeAdmin] MSW: 未启用 (VITE_ENABLE_MOCK =', import.meta.env.VITE_ENABLE_MOCK, ')')
   }
 
   // 关键：在路由使用之前初始化 store，确保 pinia-plugin-persistedstate 已恢复数据
