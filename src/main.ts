@@ -19,7 +19,7 @@ async function bootstrap() {
   const app = createApp(App)
 
   // 根据环境变量决定是否启动 MSW Mock 服务
-  const enableMock = String(import.meta.env.VITE_ENABLE_MOCK) === 'true'
+  const enableMock = String(import.meta.env.VITE_ENABLE_MOCK).trim() === 'true'
   if (enableMock) {
     console.log('[BreezeAdmin] MSW: 开始初始化...')
     try {
