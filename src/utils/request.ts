@@ -58,8 +58,11 @@ function handle401(): void {
 
 // ======================== Alova 实例 ========================
 
+// Mock 启用时 baseURL 置空，请求走相对路径，由 MSW 拦截，避免跨域问题
+const enableMock = String(import.meta.env.VITE_ENABLE_MOCK).trim() === 'true'
+
 export const alovaInstance = createAlova({
-  baseURL: import.meta.env.VITE_SERVICE_BASE_URL,
+  baseURL: enableMock ? '' : import.meta.env.VITE_SERVICE_BASE_URL,
   statesHook: VueHook,
   timeout: 30000,
   requestAdapter: GlobalFetch(),

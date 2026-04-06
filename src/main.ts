@@ -7,12 +7,19 @@ import { i18n } from './locales'
 import { useAuthStore } from './stores/auth'
 import './styles/globals.css'
 
-async function bootstrap() {
-  // Debug: 验证 env 变量是否正确注入
-  const mockFlag = import.meta.env.VITE_ENABLE_MOCK
-  console.log('[BreezeAdmin] VITE_ENABLE_MOCK =', mockFlag, typeof mockFlag)
-  console.log('[BreezeAdmin] VITE_SERVICE_BASE_URL =', import.meta.env.VITE_SERVICE_BASE_URL)
+// 开发环境过滤第三方库的推广信息
+if (import.meta.env.DEV) {
+  const originalLog = console.log
+  console.log = (...args: unknown[]) => {
+    const msg = args.join('')
+    if (msg.includes('powerful alova') || msg.includes('please star alova') || msg.includes('use mock data:')) {
+      return
+    }
+    originalLog.apply(console, args)
+  }
+}
 
+async function bootstrap() {
   const pinia = createPinia()
   pinia.use(piniaPluginPersistedstate)
 
@@ -21,28 +28,23 @@ async function bootstrap() {
   // 根据环境变量决定是否启动 MSW Mock 服务
   const enableMock = String(import.meta.env.VITE_ENABLE_MOCK).trim() === 'true'
   if (enableMock) {
-    console.log('[BreezeAdmin] MSW: 开始初始化...')
     try {
       const { worker } = await import('./mocks/browser')
-      console.log('[BreezeAdmin] MSW: browser 模块已加载')
       await worker.start({
         onUnhandledRequest: 'bypass',
         serviceWorker: {
           url: '/mockServiceWorker.js',
         },
       })
-      console.log('[BreezeAdmin] MSW: Service Worker 已启动, 拦截列表:', worker.listHandlers())
     } catch (e) {
       console.error('[BreezeAdmin] MSW: 初始化失败', e)
     }
-  } else {
-    console.log('[BreezeAdmin] MSW: 未启用 (VITE_ENABLE_MOCK =', import.meta.env.VITE_ENABLE_MOCK, ')')
   }
 
   // 关键：在路由使用之前初始化 store，确保 pinia-plugin-persistedstate 已恢复数据
   app.use(pinia)
   // pinia-plugin-persistedstate 会在 store 首次访问时自动恢复数据，初始化 store 触发恢复
-  useAuthStore()  
+  useAuthStore()
 
   app.use(router)
   app.use(i18n)

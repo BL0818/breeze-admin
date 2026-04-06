@@ -32,7 +32,7 @@ import {
   SheetTrigger
 } from '@/components/ui/sheet'
 import ForgotPassword from './ForgotPassword.vue'
-import { Sun, Moon, Monitor, Globe, User, Lock, Wind, Zap, Shield, Layers, AlertCircle, Loader2 } from 'lucide-vue-next'
+import { Sun, Moon, Monitor, Globe, User, Lock, Wind, Zap, Shield, Layers, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-vue-next'
 
 import type { LoginData } from '@/types/api-schema'
 
@@ -93,6 +93,7 @@ const passwordField = register('password')
 const rememberMe = ref(false)
 const errorMessage = ref('')
 const isLoaded = ref(false)
+const showPassword = ref(false)
 
 onMounted(() => {
   setTimeout(() => {
@@ -162,14 +163,14 @@ const loginRequest = useRequest(
     >
       <!-- Animated Background Shapes -->
       <div class="absolute inset-0 overflow-hidden">
-        <div class="absolute -top-20 -left-20 w-80 h-80 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
-        <div class="absolute top-1/3 -right-20 w-96 h-96 bg-white/5 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s;"></div>
-        <div class="absolute bottom-0 left-1/4 w-64 h-64 bg-white/10 rounded-full blur-3xl animate-pulse" style="animation-delay: 2s;"></div>
+        <div class="absolute -top-20 -left-20 w-80 h-80 bg-white/10 rounded-full blur-3xl animate-pulse" />
+        <div class="absolute top-1/3 -right-20 w-96 h-96 bg-white/5 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s;" />
+        <div class="absolute bottom-0 left-1/4 w-64 h-64 bg-white/10 rounded-full blur-3xl animate-pulse" style="animation-delay: 2s;" />
         <!-- Floating geometric shapes -->
-        <div class="absolute top-20 left-20 w-4 h-4 bg-white/30 rotate-45 animate-bounce" style="animation-duration: 3s;"></div>
-        <div class="absolute top-40 right-32 w-3 h-3 bg-white/20 rounded-full animate-bounce" style="animation-duration: 2.5s; animation-delay: 0.5s;"></div>
-        <div class="absolute bottom-40 left-1/3 w-2 h-8 bg-white/20 animate-bounce" style="animation-duration: 4s; animation-delay: 1s;"></div>
-        <div class="absolute top-1/2 right-1/4 w-6 h-6 border border-white/20 rotate-12 animate-bounce" style="animation-duration: 3.5s; animation-delay: 1.5s;"></div>
+        <div class="absolute top-20 left-20 w-4 h-4 bg-white/30 rotate-45 animate-bounce" style="animation-duration: 3s;" />
+        <div class="absolute top-40 right-32 w-3 h-3 bg-white/20 rounded-full animate-bounce" style="animation-duration: 2.5s; animation-delay: 0.5s;" />
+        <div class="absolute bottom-40 left-1/3 w-2 h-8 bg-white/20 animate-bounce" style="animation-duration: 4s; animation-delay: 1s;" />
+        <div class="absolute top-1/2 right-1/4 w-6 h-6 border border-white/20 rotate-12 animate-bounce" style="animation-duration: 3.5s; animation-delay: 1.5s;" />
       </div>
 
       <!-- Brand Content -->
@@ -255,7 +256,7 @@ const loginRequest = useRequest(
               <User class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
               <Input
                 id="username"
-                class="pl-10 h-11 bg-background border-muted-foreground/20 focus:border-primary transition-colors"
+                class="pl-10 h-11 text-base bg-background border-muted-foreground/20 focus:border-primary transition-colors"
                 placeholder="admin"
                 v-model="values.username"
                 v-bind="usernameField.attrs"
@@ -271,19 +272,30 @@ const loginRequest = useRequest(
               <Lock class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
               <Input
                 id="password"
-                type="password"
-                class="pl-10 h-11 bg-background border-muted-foreground/20 focus:border-primary transition-colors"
+                :type="showPassword ? 'text' : 'password'"
+                class="pl-10 pr-10 h-11 text-base bg-background border-muted-foreground/20 focus:border-primary transition-colors"
                 placeholder="admin123"
+                autocomplete="new-password"
+                data-ms-editor="false"
                 v-model="values.password"
                 v-bind="passwordField.attrs"
               />
+              <button
+                type="button"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                @click="showPassword = !showPassword"
+                tabindex="-1"
+              >
+                <Eye v-if="!showPassword" class="h-4 w-4" />
+                <EyeOff v-else class="h-4 w-4" />
+              </button>
             </div>
             <p v-if="errors.password" class="text-sm text-destructive">{{ errors.password }}</p>
           </div>
 
           <div class="flex items-center justify-between">
             <label class="flex items-center gap-2 text-sm">
-              <input type="checkbox" v-model="rememberMe" class="rounded border-muted-foreground/30 text-primary focus:ring-primary" />
+              <input type="checkbox" v-model="rememberMe" class="rounded border-muted-foreground/30 text-primary focus:ring-primary">
               <span class="text-muted-foreground">{{ t('login.rememberMe') || '记住我' }}</span>
             </label>
             <Sheet>
@@ -294,8 +306,8 @@ const loginRequest = useRequest(
               </SheetTrigger>
               <SheetContent side="right" class="w-[400px] sm:max-w-[400px]">
                 <SheetHeader>
-                  <SheetTitle></SheetTitle>
-                  <SheetDescription></SheetDescription>
+                  <SheetTitle />
+                  <SheetDescription />
                 </SheetHeader>
                 <div class="mt-6">
                   <ForgotPassword />
@@ -312,7 +324,7 @@ const loginRequest = useRequest(
 
         <div class="relative">
           <div class="absolute inset-0 flex items-center">
-            <div class="w-full border-t border-muted-foreground/20"></div>
+            <div class="w-full border-t border-muted-foreground/20" />
           </div>
           <div class="relative flex justify-center text-sm">
             <span class="px-4 bg-background text-muted-foreground">{{ t('login.orContinueWith') || '或通过以下方式登录' }}</span>
@@ -323,20 +335,20 @@ const loginRequest = useRequest(
         <div class="grid grid-cols-3 gap-3">
           <Button variant="outline" class="h-11 hover:bg-muted/50 transition-colors" @click="toast('Google 登录暂未开放', { description: '请联系管理员配置 OAuth2' })">
             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
             </svg>
           </Button>
           <Button variant="outline" class="h-11 hover:bg-muted/50 transition-colors" @click="toast('GitHub 登录暂未开放', { description: '请联系管理员配置 OAuth2' })">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0012 2z"/>
+              <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0012 2z" />
             </svg>
           </Button>
           <Button variant="outline" class="h-11 hover:bg-muted/50 transition-colors" @click="toast('X 登录暂未开放', { description: '请联系管理员配置 OAuth2' })">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
             </svg>
           </Button>
         </div>
@@ -358,5 +370,16 @@ const loginRequest = useRequest(
 
 .animate-shake {
   animation: shake 0.5s ease-in-out;
+}
+
+/* 禁止浏览器自带密码可见性切换按钮 */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+
+input::-webkit-credentials-auto-fill-button,
+input::-webkit-textfield-decoration-container {
+  visibility: hidden;
 }
 </style>
