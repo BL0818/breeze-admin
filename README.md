@@ -6,15 +6,21 @@
 
 基于 Vue 3 + shadcn-vue + TypeScript 构建的高保真管理后台模板
 
+### 👉 [在线演示](https://vue.breezeui.cn/) 👈
+
+**账号：** `admin` / `admin123`
+
+---
+
 [![Vue 3](https://img.shields.io/badge/Vue-3.4-4FC08D?logo=vue.js&logoColor=white)](https://vuejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-5.2-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![shadcn-vue](https://img.shields.io/badge/shadcn--vue-latest-000000?logo=shadcnui&logoColor=white)](https://www.shadcn-vue.com/)
 [![Pinia](https://img.shields.io/badge/Pinia-2.x-FFD859)](https://pinia.vuejs.org/)
-[![License](https://img.shields.io/badge/License-Private-red)]()
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 
-[快速开始](#-快速开始) · [功能预览](#-功能特性) · [技术架构](#-技术栈) · [项目结构](#-项目结构)
+[在线演示](https://vue.breezeui.cn/) · [快速开始](#-快速开始) · [功能预览](#-功能特性) · [技术架构](#-技术栈) · [项目结构](#-项目结构)
 
 </div>
 
@@ -203,26 +209,67 @@ pnpm dev
 
 ### 前置条件
 
-`msw` 已放在 `dependencies`（非 `devDependencies`），确保 Vercel 构建时能安装。
+- `msw` 放在 `dependencies`（非 `devDependencies`），确保生产构建包含 MSW
+- `public/mockServiceWorker.js` 存在（MSW Service Worker 文件，Vite 构建时自动复制）
+- `vercel.json` 配置了 SPA `rewrites` 规则，避免浏览器刷新 404
 
-### 部署步骤
+### 方式一：CLI 部署（推荐）
 
-1. **Fork 或导入** 项目到你的 GitHub/Gitee 仓库
-2. 在 [Vercel Dashboard](https://vercel.com) 导入该项目
-3. 在项目 **Settings → Environment Variables** 中添加：
+```bash
+# 安装 Vercel CLI（如未安装）
+npm i -g vercel
+
+# 部署到生产环境
+vercel --prod
+```
+
+### 方式二：GitHub 自动部署
+
+1. Fork 或导入项目到 GitHub 仓库
+2. 在 [Vercel Dashboard](https://vercel.com) 导入该项目，关联 GitHub 仓库
+3. Production Branch 设为 `main`
+4. 每次 push 到 `main` 自动触发部署
+
+```bash
+git push github main
+```
+
+### 环境变量配置
+
+在 Vercel **Settings → Environment Variables** 中添加：
 
 | 变量名 | 值 | 说明 |
 |---|---|---|
-| `VITE_ENABLE_MOCK` | `true` | 启用 MSW Mock 服务 |
-| `VITE_SERVICE_BASE_URL` | `/api` | Mock 模式下的 API 基础路径（任意值即可，MSW 会拦截） |
+| `VITE_ENABLE_MOCK` | `true` | 启用 MSW Mock 拦截 API 请求 |
+| `VITE_SERVICE_BASE_URL` | *(留空)* | 留空时请求发到当前域名，由 MSW 拦截 |
 
-4. 点击 **Deploy** 部署
+> **注意**：`VITE_` 前缀变量在构建时静态注入，修改后需重新部署才能生效。
+
+### vercel.json 说明
+
+```json
+{
+  "framework": "vite",
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}
+```
+
+`rewrites` 确保SPA History 模式路由在浏览器刷新时不会返回 404。
+
+### 常见问题
+
+| 问题 | 原因 | 解决方案 |
+|---|---|---|
+| 刷新页面 404 | 缺少 SPA 路由重写 | `vercel.json` 添加 `rewrites` |
+| `VITE_ENABLE_MOCK` 为 `undefined` | 环境变量未配置 | 在 Vercel 环境变量中添加 |
+| MSW 未启动 | 变量值含末尾空白字符 | 代码已用 `trim()` 处理 |
+| 构建失败 TS 错误 | 分支缺少修复 | 确保 `main` 分支包含最新代码 |
 
 ### 注意事项
 
 - Mock 模式仅适用于**演示和预览**，不适合生产环境
 - 所有数据为模拟数据，刷新后丢失
-- 如需接入真实后端，将 `VITE_ENABLE_MOCK` 设为 `false`，并将 `VITE_SERVICE_BASE_URL` 指向实际 API 地址；同时建议将 `package.json` 中的 `msw` 移回 `devDependencies` 以减小生产包体积
+- 如需接入真实后端：`VITE_ENABLE_MOCK` 设为 `false`，`VITE_SERVICE_BASE_URL` 指向实际 API 地址，并将 `package.json` 中的 `msw` 移回 `devDependencies`
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/import/project)
 
@@ -268,12 +315,6 @@ Mock 环境下内置三种角色的测试账号：
 
 ## 📜 许可证
 
-本项目为私有项目，未经授权不得使用、复制或分发。
+本项目基于 [MIT License](./LICENSE) 开源。
 
----
-
-<div align="center">
-
-**BreezeAdmin** © 2024 - Present
-
-</div>
+© 2024 - Present BL

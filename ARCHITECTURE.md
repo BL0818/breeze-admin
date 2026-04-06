@@ -900,7 +900,7 @@ const request = useRequest(
 |------|---------|------|---------|
 | `.env` | 所有环境 | 全局共享变量（应用标题、基础路径） | ✅ 提交 |
 | `.env.development` | `vite` (mode=development) | 开发环境 API 地址 | ✅ 提交 |
-| `.env.production` | `vite build` (mode=production) | 生产环境 API 地址 | ✅ 提交 |
+| `.env.production` | `vite build` (mode=production) | 生产环境 API 地址 | ⚠️ 被 `.gitignore` 排除，需在 Vercel 环境变量中配置 |
 | `.env.local` | 当前环境，优先级最高 | 本地覆盖（含敏感信息） | ❌ 不提交 |
 | `.env.*.local` | 对应模式的本地覆盖 | 模式特定的本地配置 | ❌ 不提交 |
 
@@ -910,7 +910,7 @@ const request = useRequest(
 |------|--------|-------------------|------------------|
 | `VITE_APP_TITLE` | `BreezeAdmin` | — | — |
 | `VITE_BASE_URL` | `/` | — | — |
-| `VITE_SERVICE_BASE_URL` | — | `http://localhost:2018` | `https://api.example.com` |
+| `VITE_SERVICE_BASE_URL` | — | `http://localhost:2018` | *(留空)* |
 | `VITE_ENABLE_MOCK` | — | `true` | `false` |
 
 ### TypeScript 类型声明 (`src/env.d.ts`)
@@ -1018,3 +1018,73 @@ pnpm dev
 ## 项目总结
 
 BreezeAdmin 项目采用现代化的技术栈组合，通过 shadcn-vue 实现高保真的 UI 设计，结合 alova 和 pinia 构建高效的状态管理，使用 echarts 提供强大的数据可视化能力。API 层采用企业级架构：Zod Schema 单一数据源 + 模块化 API 定义 + 响应自动解包 + BusinessError 错误处理 + 401 自动登出，确保类型安全和开发体验。项目结构清晰，功能完整，适合中小型企业管理后台的快速开发和迭代。
+
+## 部署
+
+### Vercel 部署
+
+项目通过 Vercel 部署，支持 CLI 手动部署和 GitHub 自动部署两种方式。
+
+#### 方式一：CLI 手动部署
+
+```bash
+# 安装 Vercel CLI（如未安装）
+npm i -g vercel
+
+# 部署到生产环境
+vercel --prod
+```
+
+#### 方式二：GitHub 自动部署
+
+1. 将代码推送到 GitHub 仓库
+2. 在 Vercel 项目中关联 GitHub 仓库（Settings → Git）
+3. 设置 Production Branch 为 `main`
+4. 每次 push 到 `main` 分支自动触发部署
+
+```bash
+git push github main
+```
+
+#### vercel.json 配置
+
+```json
+{
+  "name": "breeze-admin",
+  "framework": "vite",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
+```
+
+`rewrites` 规则确保 SPA 的 history 模式路由在浏览器刷新时不会返回 404。
+
+#### 环境变量配置
+
+在 Vercel 项目 Settings → Environment Variables 中配置以下变量：
+
+| 变量名 | 值 | 说明 |
+|--------|-----|------|
+| `VITE_ENABLE_MOCK` | `true` | 无真实后端时启用 MSW Mock 拦截 |
+| `VITE_SERVICE_BASE_URL` | *(留空)* | 留空时请求发到当前域名，由 MSW 拦截 |
+
+**注意**：
+- `VITE_` 前缀的变量在构建时被 Vite 静态注入到代码中，修改后需要重新部署才能生效
+- Vercel 环境变量值可能包含末尾空白字符，代码中使用 `trim()` 处理：`String(import.meta.env.VITE_ENABLE_MOCK).trim() === 'true'`
+
+#### MSW Mock 生产环境注意事项
+
+1. `public/mockServiceWorker.js` 文件必须在构建产物中（已在 `public/` 目录，Vite 自动复制）
+2. MSW 的 `serviceWorker.url` 需显式指定为 `/mockServiceWorker.js`
+3. MSW handlers 使用相对路径（如 `/api/auth/login`），与同源请求匹配
+4. 当有真实后端时，移除 `VITE_ENABLE_MOCK` 环境变量并设置 `VITE_SERVICE_BASE_URL` 为后端地址
+
+#### 常见问题
+
+| 问题 | 原因 | 解决方案 |
+|------|------|---------|
+| 刷新页面 404 | 缺少 SPA 路由重写 | `vercel.json` 添加 `rewrites` 规则 |
+| `VITE_ENABLE_MOCK` 为 `undefined` | Vercel 未配置环境变量且 `.env.production` 被 `.gitignore` 排除 | 在 Vercel 环境变量中配置 |
+| MSW 未启动 | 环境变量值含末尾空白 | 代码中使用 `trim()` 处理 |
+| TS 构建错误 | 推送的分支缺少修复 | 确保 `main` 分支包含所有修复 |
